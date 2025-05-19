@@ -16,7 +16,7 @@ const GoalManager = (() => {
     
     // Inicialización
     function init(contractInstance, account) {
-        console.log("Inicializando GoalManager...");
+        console.log("Initializing GoalManager...");
         contract = contractInstance;
         userAccount = account;
         
@@ -36,15 +36,15 @@ const GoalManager = (() => {
         
         // Verificar que los elementos existen
         if (!addGoalBtn) {
-            console.error("Error: Elemento 'add-goal' no encontrado");
+            console.error("Error: Element 'add-goal' not found");
             return;
         }
         
-        console.log("Elementos DOM para goals encontrados, configurando eventos...");
+        console.log("DOM elements for goals found, setting up events...");
         
         // Usar onclick directo en lugar de addEventListener
         addGoalBtn.onclick = function() {
-            console.log("Botón Save Goal clickeado");
+            console.log("Save Goal button clicked");
             createGoal();
         };
         
@@ -54,88 +54,88 @@ const GoalManager = (() => {
         if (editConfirm) editConfirm.onclick = confirmEditGoal;
         
         // Cargar objetivos iniciales
-        console.log("Cargando objetivos iniciales...");
+        console.log("Loading initial goals...");
         loadMyGoals();
     }
     
     // Crear un nuevo objetivo
     async function createGoal() {
-        console.log("Función createGoal llamada");
+        console.log("createGoal function called");
         try {
             const text = goalText.value.trim();
             const deadlineDate = new Date(deadline.value);
             
-            console.log("Datos del formulario:", { text, deadline: deadline.value, deadlineDate });
+            console.log("Form data:", { text, deadline: deadline.value, deadlineDate });
             
             if (!text) {
-                alert("Por favor ingresa un objetivo");
+                alert("Please enter a goal");
                 return;
             }
             
             if (isNaN(deadlineDate.getTime())) {
-                alert("Por favor selecciona una fecha límite válida");
+                alert("Please select a valid deadline");
                 return;
             }
             
             // Verificar que la fecha es futura
             const now = new Date();
             if (deadlineDate < now) {
-                alert("La fecha límite debe ser en el futuro");
+                alert("Deadline must be in the future");
                 return;
             }
             
             // Convertir fecha a timestamp Unix (segundos)
             const deadlineTimestamp = Math.floor(deadlineDate.getTime() / 1000);
-            console.log("Timestamp calculado:", deadlineTimestamp);
+            console.log("Calculated timestamp:", deadlineTimestamp);
             
             // Deshabilitar botón mientras se procesa
             addGoalBtn.disabled = true;
-            addGoalBtn.innerHTML = "<span class='loader'></span> Guardando...";
+            addGoalBtn.innerHTML = "<span class='loader'></span> Saving...";
             
             // Verificar que tenemos el contrato
             if (!contract) {
-                console.error("Error: Contrato no inicializado");
-                alert("Error: No se ha podido conectar con el contrato. Por favor, recarga la página.");
+                console.error("Error: Contract not initialized");
+                alert("Error: Could not connect to the contract. Please reload the page.");
                 addGoalBtn.disabled = false;
-                addGoalBtn.textContent = "Guardar Objetivo";
+                addGoalBtn.textContent = "Save Goal";
                 return;
             }
             
             // Mostrar información de depuración
-            console.log("Llamando al contrato:", {
-                método: "addGoal",
-                texto: text,
+            console.log("Calling contract:", {
+                method: "addGoal",
+                text: text,
                 deadline: deadlineTimestamp,
-                contrato: contract.address
+                contract: contract.address
             });
             
             // Llamar al contrato con manejo de errores explícito
             try {
                 // Primer intento - con la función original
-                console.log("Intentando llamar a addGoal...");
+                console.log("Attempting to call addGoal...");
                 const tx = await contract.addGoal(text, deadlineTimestamp);
-                console.log("Transacción enviada:", tx.hash);
-                console.log("Esperando confirmación...");
+                console.log("Transaction sent:", tx.hash);
+                console.log("Waiting for confirmation...");
                 await tx.wait();
-                console.log("Transacción confirmada!");
+                console.log("Transaction confirmed!");
             } catch (contractError) {
-                console.error("Error específico al llamar al contrato:", contractError);
+                console.error("Specific error calling the contract:", contractError);
                 
                 // Si hay un error, intenta una versión alternativa
                 if (contractError.message.includes("parameters") || 
                     contractError.message.includes("arguments") ||
                     contractError.message.includes("wrong number")) {
                     
-                    console.log("Intentando versión alternativa de la función...");
+                    console.log("Trying alternative version of function...");
                     try {
                         // Alternativa: En algunos contratos addGoal podría tener más parámetros
                         // Intenta solo con los parámetros obligatorios
                         const tx = await contract.addGoal(text, deadlineTimestamp);
-                        console.log("Transacción alternativa enviada:", tx.hash);
+                        console.log("Alternative transaction sent:", tx.hash);
                         await tx.wait();
-                        console.log("Transacción alternativa confirmada!");
+                        console.log("Alternative transaction confirmed!");
                     } catch (altError) {
-                        throw new Error(`Error en intento alternativo: ${altError.message}`);
+                        throw new Error(`Error in alternative attempt: ${altError.message}`);
                     }
                 } else {
                     throw contractError;
@@ -147,15 +147,15 @@ const GoalManager = (() => {
             deadline.value = "";
             
             // Recargar objetivos
-            console.log("Recargando objetivos...");
+            console.log("Reloading goals...");
             loadMyGoals();
             
             // Mostrar mensaje de éxito
-            alert("¡Objetivo guardado con éxito!");
+            alert("Goal saved successfully!");
             
         } catch (error) {
-            console.error("Error al crear objetivo:", error);
-            alert(`Error al guardar el objetivo: ${error.message}`);
+            console.error("Error creating goal:", error);
+            alert(`Error saving goal: ${error.message}`);
         } finally {
             addGoalBtn.disabled = false;
             addGoalBtn.textContent = "Save Goal";
@@ -164,18 +164,18 @@ const GoalManager = (() => {
     
     // Marcar objetivo como completado
     async function completeGoal(owner, index) {
-        console.log(`Completando objetivo: owner=${owner}, index=${index}`);
+        console.log(`Completing goal: owner=${owner}, index=${index}`);
         try {
             const completeButton = document.getElementById(`complete-button-${owner}-${index}`);
             if (completeButton) {
-                completeButton.innerHTML = "<span class='loader'></span> Procesando...";
+                completeButton.innerHTML = "<span class='loader'></span> Processing...";
                 completeButton.disabled = true;
             }
             
             const tx = await contract.completeGoal(owner, index);
-            console.log("Transacción enviada:", tx.hash);
+            console.log("Transaction sent:", tx.hash);
             await tx.wait();
-            console.log("Objetivo completado!");
+            console.log("Goal completed!");
             
             // Recargar objetivos según la pestaña actual
             if (owner === userAccount) {
@@ -185,11 +185,11 @@ const GoalManager = (() => {
             }
             
         } catch (error) {
-            console.error("Error al completar objetivo:", error);
+            console.error("Error completing goal:", error);
             alert(`Error: ${error.message}`);
             const completeButton = document.getElementById(`complete-button-${owner}-${index}`);
             if (completeButton) {
-                completeButton.textContent = "Marcar Completado";
+                completeButton.textContent = "Mark Complete";
                 completeButton.disabled = false;
             }
         }
@@ -197,33 +197,33 @@ const GoalManager = (() => {
     
     // Mostrar modal de eliminación
     function showDeleteModal(owner, index) {
-        console.log(`Mostrando modal de eliminación: owner=${owner}, index=${index}`);
+        console.log(`Showing delete modal: owner=${owner}, index=${index}`);
         goalToDelete = { owner, index };
         if (deleteModal) deleteModal.classList.add('active');
     }
     
     // Ocultar modal de eliminación
     function hideDeleteModal() {
-        console.log("Ocultando modal de eliminación");
+        console.log("Hiding delete modal");
         if (deleteModal) deleteModal.classList.remove('active');
         goalToDelete = { owner: null, index: -1 };
     }
     
     // Eliminar objetivo (después de confirmación)
     async function confirmDeleteGoal() {
-        console.log("Confirmando eliminación:", goalToDelete);
+        console.log("Confirming deletion:", goalToDelete);
         if (!goalToDelete.owner || goalToDelete.index < 0) return;
         
         try {
             if (modalConfirm) {
-                modalConfirm.innerHTML = "<span class='loader'></span> Eliminando...";
+                modalConfirm.innerHTML = "<span class='loader'></span> Deleting...";
                 modalConfirm.disabled = true;
             }
             
             const tx = await contract.deleteGoal(goalToDelete.owner, goalToDelete.index);
-            console.log("Transacción enviada:", tx.hash);
+            console.log("Transaction sent:", tx.hash);
             await tx.wait();
-            console.log("Objetivo eliminado!");
+            console.log("Goal deleted!");
             
             hideDeleteModal();
             
@@ -235,11 +235,11 @@ const GoalManager = (() => {
             }
             
         } catch (error) {
-            console.error("Error al eliminar objetivo:", error);
+            console.error("Error deleting goal:", error);
             alert(`Error: ${error.message}`);
         } finally {
             if (modalConfirm) {
-                modalConfirm.innerHTML = "Eliminar Objetivo";
+                modalConfirm.innerHTML = "Delete Goal";
                 modalConfirm.disabled = false;
             }
         }
@@ -247,7 +247,7 @@ const GoalManager = (() => {
     
     // Mostrar modal de edición
     function showEditModal(owner, index, text, deadlineTimestamp) {
-        console.log(`Mostrando modal de edición: owner=${owner}, index=${index}`);
+        console.log(`Showing edit modal: owner=${owner}, index=${index}`);
         goalToEdit = { owner, index };
         
         // Llenar los campos con datos actuales
@@ -266,14 +266,14 @@ const GoalManager = (() => {
     
     // Ocultar modal de edición
     function hideEditModal() {
-        console.log("Ocultando modal de edición");
+        console.log("Hiding edit modal");
         if (editModal) editModal.classList.remove('active');
         goalToEdit = { owner: null, index: -1 };
     }
     
     // Editar objetivo (después de confirmar en el modal)
     async function confirmEditGoal() {
-        console.log("Confirmando edición:", goalToEdit);
+        console.log("Confirming edit:", goalToEdit);
         if (!goalToEdit.owner || goalToEdit.index < 0) return;
         
         try {
@@ -281,12 +281,12 @@ const GoalManager = (() => {
             const deadlineDate = new Date(editDeadline.value);
             
             if (!text) {
-                alert("Por favor ingresa un texto para el objetivo");
+                alert("Please enter a goal text");
                 return;
             }
             
             if (isNaN(deadlineDate.getTime())) {
-                alert("Por favor selecciona una fecha límite válida");
+                alert("Please select a valid deadline");
                 return;
             }
             
@@ -295,7 +295,7 @@ const GoalManager = (() => {
             
             // Deshabilitar botón mientras se procesa
             if (editConfirm) {
-                editConfirm.innerHTML = "<span class='loader'></span> Guardando...";
+                editConfirm.innerHTML = "<span class='loader'></span> Saving...";
                 editConfirm.disabled = true;
             }
             
@@ -306,9 +306,9 @@ const GoalManager = (() => {
                 text, 
                 deadlineTimestamp
             );
-            console.log("Transacción enviada:", tx.hash);
+            console.log("Transaction sent:", tx.hash);
             await tx.wait();
-            console.log("Objetivo editado!");
+            console.log("Goal edited!");
             
             hideEditModal();
             
@@ -320,11 +320,11 @@ const GoalManager = (() => {
             }
             
         } catch (error) {
-            console.error("Error al editar objetivo:", error);
+            console.error("Error editing goal:", error);
             alert(`Error: ${error.message}`);
         } finally {
             if (editConfirm) {
-                editConfirm.innerHTML = "Guardar Cambios";
+                editConfirm.innerHTML = "Save Changes";
                 editConfirm.disabled = false;
             }
         }
@@ -332,20 +332,20 @@ const GoalManager = (() => {
     
     // Cargar mis objetivos
     async function loadMyGoals() {
-        console.log("Cargando mis objetivos...");
+        console.log("Loading my goals...");
         try {
             // Verificar que tenemos el contrato y la cuenta
             if (!contract) {
-                console.error("Error: Contrato no inicializado");
+                console.error("Error: Contract not initialized");
                 return;
             }
             
             if (!userAccount) {
-                console.error("Error: No hay cuenta de usuario");
+                console.error("Error: No user account");
                 return;
             }
             
-            console.log("Solicitando objetivos para la cuenta:", userAccount);
+            console.log("Requesting goals for account:", userAccount);
             
             // Llamar al contrato para obtener objetivos
             let goals, indices;
@@ -353,7 +353,7 @@ const GoalManager = (() => {
             try {
                 // Primero intenta con la función que devuelve dos valores (array de objetivos y array de índices)
                 const result = await contract.getUserGoals(userAccount);
-                console.log("Resultado obtenido:", result);
+                console.log("Result obtained:", result);
                 
                 // Comprobamos si el resultado es un array con dos elementos (como se espera)
                 if (Array.isArray(result) && result.length === 2) {
@@ -365,10 +365,10 @@ const GoalManager = (() => {
                     indices = Array.from({ length: goals.length }, (_, i) => i);
                 }
             } catch (error) {
-                console.error("Error al obtener objetivos:", error);
+                console.error("Error getting goals:", error);
                 
                 // Intentar con versión alternativa que no requiere parámetros
-                console.log("Intentando versión alternativa sin parámetros...");
+                console.log("Trying alternative version without parameters...");
                 try {
                     const result = await contract.getUserGoals();
                     
@@ -380,44 +380,44 @@ const GoalManager = (() => {
                         indices = Array.from({ length: goals.length }, (_, i) => i);
                     }
                 } catch (altError) {
-                    throw new Error(`No se pudieron obtener los objetivos: ${altError.message}`);
+                    throw new Error(`Could not get goals: ${altError.message}`);
                 }
             }
             
             // Limpiar lista
             if (!goalsList) {
-                console.error("Error: Elemento 'goals-list' no encontrado");
+                console.error("Error: Element 'goals-list' not found");
                 return;
             }
             
             goalsList.innerHTML = '';
             
             if (!goals || goals.length === 0) {
-                console.log("No se encontraron objetivos");
+                console.log("No goals found");
                 goalsList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">📝</div>
-                        <div class="empty-state-text">Aún no tienes objetivos. Añade tu primer objetivo arriba.</div>
+                        <div class="empty-state-text">You don't have any goals yet. Add your first goal above.</div>
                     </div>
                 `;
                 return;
             }
             
-            console.log(`Se encontraron ${goals.length} objetivos`);
+            console.log(`Found ${goals.length} goals`);
             
             // Añadir cada objetivo a la lista
             goals.forEach((goal, arrayIndex) => {
                 const index = indices[arrayIndex].toNumber ? indices[arrayIndex].toNumber() : indices[arrayIndex];
-                console.log(`Renderizando objetivo ${index}:`, goal);
+                console.log(`Rendering goal ${index}:`, goal);
                 renderGoalItem(goal, userAccount, index);
             });
             
         } catch (error) {
-            console.error("Error al cargar objetivos:", error);
+            console.error("Error loading goals:", error);
             if (goalsList) {
                 goalsList.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-text">Error al cargar objetivos: ${error.message}. Por favor intenta de nuevo.</div>
+                        <div class="empty-state-text">Error loading goals: ${error.message}. Please try again.</div>
                     </div>
                 `;
             }
@@ -426,12 +426,12 @@ const GoalManager = (() => {
     
     // Renderizar un elemento de objetivo
     function renderGoalItem(goal, owner, index) {
-        console.log(`Renderizando objetivo: owner=${owner}, index=${index}`);
+        console.log(`Rendering goal: owner=${owner}, index=${index}`);
         const goalElement = document.createElement('div');
         
         // Obtener valores asegurándose de que sean de tipo primitivo (no BigNumber)
         const deadline = typeof goal.deadline === 'object' && goal.deadline.toNumber ? 
-                         goal.deadline.toNumber() : Number(goal.deadline);
+                        goal.deadline.toNumber() : Number(goal.deadline);
         const completed = goal.completed === true; // Asegurarse de que es un booleano
         
         const currentTimestamp = Math.floor(Date.now() / 1000);
@@ -447,11 +447,11 @@ const GoalManager = (() => {
         
         let statusBadge = '';
         if (completed) {
-            statusBadge = '<span class="status-badge badge-completed">Completado</span>';
+            statusBadge = '<span class="status-badge badge-completed">Completed</span>';
         } else if (isExpired) {
-            statusBadge = '<span class="status-badge badge-expired">Expirado</span>';
+            statusBadge = '<span class="status-badge badge-expired">Expired</span>';
         } else {
-            statusBadge = '<span class="status-badge badge-pending">En Progreso</span>';
+            statusBadge = '<span class="status-badge badge-pending">In Progress</span>';
         }
         
         // Convertir timestamp a fecha legible
@@ -459,8 +459,8 @@ const GoalManager = (() => {
         try {
             deadlineDate = new Date(deadline * 1000).toLocaleDateString();
         } catch (error) {
-            console.error("Error al formatear fecha:", error);
-            deadlineDate = "Fecha inválida";
+            console.error("Error formatting date:", error);
+            deadlineDate = "Invalid date";
         }
         
         // Mostrar propietario si es un objetivo compartido
@@ -469,38 +469,37 @@ const GoalManager = (() => {
             ownerInfo = `
                 <div class="goal-owner">
                     <span class="goal-owner-icon">👤</span>
-                    <span>Creado por: ${owner.substring(0, 6)}...${owner.substring(38)}</span>
+                    <span>Created by: ${owner.substring(0, 6)}...${owner.substring(38)}</span>
                 </div>
             `;
         }
         
         // Escapar texto del objetivo para evitar problemas con comillas
-        const escapedText = goal.text.replace(/"/g, '&quot;');
+        const escapedText = typeof goal.text === 'string' ? 
+                           goal.text.replace(/"/g, '&quot;') : 
+                           'Goal without text';
         
         // Construir elemento HTML (usando IDs únicos para los botones)
+        // Ahora los botones dependen del estado del goal
         goalElement.innerHTML = `
             ${ownerInfo}
             <div class="goal-title">
                 <span>${goal.text}</span>
                 ${statusBadge}
             </div>
-            <div class="goal-deadline">Fecha límite: ${deadlineDate}</div>
+            <div class="goal-deadline">Deadline: ${deadlineDate}</div>
             <div class="goal-actions">
                 ${!completed && !isExpired ? 
                     `<button id="complete-button-${owner}-${index}" 
-                        class="sf-button">Marcar Completado</button>` : ''}
-                
-                <button id="edit-button-${owner}-${index}" 
-                    class="sf-button">Editar</button>
-                
-                <button id="share-button-${index}" 
-                    class="sf-button">Compartir</button>
-                
-                <button id="delete-button-${owner}-${index}" 
-                    class="sf-button sf-button-danger">Eliminar</button>
+                        class="sf-button">Mark Complete</button>
+                    <button id="edit-button-${owner}-${index}" 
+                        class="sf-button">Edit</button>` : ''}
                 
                 <button id="access-button-${index}"
-                    class="sf-button">Gestionar Acceso</button>
+                    class="sf-button">Manage Access</button>
+                
+                <button id="delete-button-${owner}-${index}" 
+                    class="sf-button sf-button-danger">Delete</button>
             </div>
         `;
         
@@ -514,21 +513,16 @@ const GoalManager = (() => {
                 if (completeBtn) {
                     completeBtn.onclick = () => completeGoal(owner, index);
                 }
-            }
-            
-            const editBtn = document.getElementById(`edit-button-${owner}-${index}`);
-            if (editBtn) {
-                editBtn.onclick = () => showEditModal(owner, index, escapedText, deadline);
+                
+                const editBtn = document.getElementById(`edit-button-${owner}-${index}`);
+                if (editBtn) {
+                    editBtn.onclick = () => showEditModal(owner, index, escapedText, deadline);
+                }
             }
             
             const deleteBtn = document.getElementById(`delete-button-${owner}-${index}`);
             if (deleteBtn) {
                 deleteBtn.onclick = () => showDeleteModal(owner, index);
-            }
-            
-            const shareBtn = document.getElementById(`share-button-${index}`);
-            if (shareBtn && window.SharingManager) {
-                shareBtn.onclick = () => window.SharingManager.showShareModal(index);
             }
             
             const accessBtn = document.getElementById(`access-button-${index}`);
@@ -556,12 +550,12 @@ const GoalManager = (() => {
 
 // Función global para crear objetivo desde HTML
 window.createGoalDirect = function() {
-    console.log("Función createGoalDirect llamada directamente");
+    console.log("createGoalDirect function called directly");
     if (GoalManager) {
         GoalManager.createGoal();
     } else {
-        console.error("GoalManager no está definido");
-        alert("Error: No se pudo acceder al administrador de objetivos");
+        console.error("GoalManager is not defined");
+        alert("Error: Could not access the goal manager");
     }
 };
 
@@ -570,7 +564,7 @@ window.GoalManager = GoalManager;
 
 // Inicializar automáticamente cuando se complete el evento walletConnected
 document.addEventListener('walletConnected', function(event) {
-    console.log("Evento walletConnected recibido en goals.js");
+    console.log("walletConnected event received in goals.js");
     const { contract, userAccount } = event.detail;
     GoalManager.init(contract, userAccount);
 });

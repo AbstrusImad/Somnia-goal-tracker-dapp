@@ -114,7 +114,7 @@
         </div>
 
         <!-- Share Goal Modal -->
-        <div id="share-modal" class="modal-overlay">
+        <div id="share-modal" class="modal-overlay share-modal">
             <div class="modal-content">
                 <div class="modal-header">
                     <span class="share-icon">🔗</span>
@@ -169,7 +169,7 @@
         </div>
 
         <!-- Access Management Modal -->
-        <div id="access-modal" class="modal-overlay">
+        <div id="access-modal" class="modal-overlay access-modal">
             <div class="modal-content modal-lg">
                 <div class="modal-header">
                     <span class="users-icon">👥</span>
@@ -195,8 +195,8 @@
     <script src="js/goals.js"></script>
     <script src="js/sharing.js"></script>
     <script src="js/app.js"></script>
-
-    <!-- Código para solucionar problemas de conexión -->
+    
+    <!-- Script para solucionar problemas de conexión -->
     <script>
         // Script de respaldo para conexión directa a MetaMask
         document.addEventListener('DOMContentLoaded', function() {
@@ -206,78 +206,12 @@
             setTimeout(function() {
                 const connectBtn = document.getElementById('connect-wallet');
                 
-                // Añadir un atributo onclick directamente como respaldo
+                // Añadir un atributo onclick directo como respaldo
                 if (connectBtn) {
                     console.log("Añadiendo atributo onclick directo al botón como respaldo");
                     connectBtn.setAttribute('onclick', 'connectMetaMask()');
                 }
             }, 3000);
-        });
-    </script>
-
-    <!-- Código para modificar el botón Save Goal en index.html -->
-    <script>
-        // Script para asegurarse de que el botón Save Goal funcione
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("Configurando botón Save Goal...");
-            
-            // Obtener referencia al botón
-            const saveGoalBtn = document.getElementById('add-goal');
-            
-            if (saveGoalBtn) {
-                console.log("Botón Save Goal encontrado, añadiendo atributo onclick directo");
-                
-                // Añadir atributo onclick directo
-                saveGoalBtn.setAttribute('onclick', 'createGoalDirect()');
-            } else {
-                console.error("Botón Save Goal no encontrado");
-            }
-        });
-    </script>
-
-    <!-- Código para garantizar que los botones Share Goal funcionen -->
-    <script>
-        // Script para configurar los botones de compartir
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("Configurando botones de compartir...");
-            
-            // Función para actualizar todos los botones de compartir
-            function setupShareButtons() {
-                // Buscar todos los botones de compartir (pueden ser múltiples)
-                const shareButtons = document.querySelectorAll('button[id^="share-button-"]');
-                
-                console.log(`Encontrados ${shareButtons.length} botones de compartir`);
-                
-                shareButtons.forEach(button => {
-                    const goalIndex = button.id.replace('share-button-', '');
-                    console.log(`Configurando botón de compartir para objetivo ${goalIndex}`);
-                    
-                    // Agregar atributo onclick directo
-                    button.setAttribute('onclick', `shareGoalDirect(${goalIndex})`);
-                });
-            }
-            
-            // Configurar inmediatamente y luego cada segundo durante 5 segundos
-            // (para capturar botones que se añaden dinámicamente)
-            setupShareButtons();
-            
-            let attempts = 0;
-            const interval = setInterval(() => {
-                setupShareButtons();
-                attempts++;
-                if (attempts >= 5) clearInterval(interval);
-            }, 1000);
-            
-            // También configurar los botones del modal de compartir
-            const shareBtn = document.getElementById('share-confirm');
-            if (shareBtn) {
-                shareBtn.setAttribute('onclick', 'SharingManager.confirmShareGoal()');
-            }
-            
-            const cancelShareBtn = document.getElementById('share-cancel');
-            if (cancelShareBtn) {
-                cancelShareBtn.setAttribute('onclick', 'SharingManager.hideShareModal()');
-            }
         });
     </script>
 </body>

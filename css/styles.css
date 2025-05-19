@@ -1,4 +1,4 @@
-/* styles.css completamente actualizado */
+/* styles.css - ARCHIVO COMPLETO ACTUALIZADO */
 
 /* True Apple-inspired design */
 :root {
@@ -316,9 +316,19 @@ input:focus, select:focus {
 
 .goal-actions {
     display: flex;
-    gap: 8px;
-    margin-top: 8px;
     flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.goal-actions .sf-button {
+    flex: 1;
+    min-width: 120px;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
 }
 
 .goal-item.completed {
@@ -444,17 +454,25 @@ input:focus, select:focus {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
+    z-index: 1000; /* Base z-index for modals */
 }
 
 .modal-overlay.active {
     opacity: 1;
     visibility: visible;
+}
+
+.modal-overlay.share-modal {
+    z-index: 2000; /* Higher z-index for share modal */
+}
+
+.modal-overlay.access-modal {
+    z-index: 1500; /* Lower z-index than share modal */
 }
 
 .modal-content {
@@ -466,6 +484,8 @@ input:focus, select:focus {
     width: 100%;
     transform: translateY(20px);
     transition: all 0.3s ease;
+    position: relative;
+    z-index: inherit;
 }
 
 .modal-lg {
@@ -681,7 +701,32 @@ input:focus, select:focus {
     border-left: 4px solid var(--info-color);
 }
 
-/* Mejoras para responsividad en múltiples dispositivos */
+/* Responsive layouts */
+@media (min-width: 768px) {
+    .app-content {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+    }
+    
+    .sidebar {
+        width: 350px;
+        flex-shrink: 0;
+    }
+    
+    .main-content {
+        flex-grow: 1;
+    }
+    
+    .form-section,
+    .goals-section {
+        margin-top: 0;
+    }
+    
+    .goal-actions .sf-button {
+        flex: 1 1 calc(50% - 8px);
+    }
+}
 
 /* Tablets y dispositivos medianos */
 @media (max-width: 768px) {
@@ -715,6 +760,7 @@ input:focus, select:focus {
     
     .goal-actions .sf-button {
         margin-bottom: 8px;
+        flex: 1 1 calc(50% - 8px);
     }
 }
 
@@ -756,7 +802,13 @@ input:focus, select:focus {
     
     .modal-content {
         padding: 20px;
-        width: 90%;
+        width: 95%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .modal-lg {
+        max-width: 95%;
     }
     
     .tab-button {
@@ -789,6 +841,11 @@ input:focus, select:focus {
         right: 10px;
         left: 10px;
         max-width: none;
+    }
+    
+    .goal-actions .sf-button {
+        flex: 1 1 100%;
+        width: 100%;
     }
 }
 
