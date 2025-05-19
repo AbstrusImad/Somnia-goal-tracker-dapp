@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Goal Tracker</title>
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+    <!-- Cambio importante: Usar CDN alternativo para ethers.js -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -143,6 +144,15 @@
     </div>
 
     <script>
+        // Validar que ethers esté disponible
+        if (typeof ethers === 'undefined') {
+            console.error("Ethers no está definido. Verificando carga de la biblioteca...");
+            document.getElementById('metamask-status').textContent = 
+                "Error: No se pudo cargar la biblioteca ethers.js. Por favor, actualiza la página o intenta con otro navegador.";
+        } else {
+            console.log("Ethers cargado correctamente:", ethers.version);
+        }
+
         // Dirección del contrato desplegado
         const CONTRACT_ADDRESS = "0xa834416362bff38f52dA74d601BD12D3e8C336f8";
         
