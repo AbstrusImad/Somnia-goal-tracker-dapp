@@ -9,6 +9,7 @@ const SharingManager = (() => {
     let userAccount;
     let goalToShare = -1;
     let goalToManage = -1;
+    let autoRefreshSystem = null;
     
     // DOM elements
     let shareModal, shareAddress, shareName, shareRole, shareCancel, shareConfirm;
@@ -52,6 +53,12 @@ const SharingManager = (() => {
         // Tab navigation
         if (tabMyGoals) tabMyGoals.onclick = showMyGoalsTab;
         if (tabSharedGoals) tabSharedGoals.onclick = showSharedGoalsTab;
+        
+        // Iniciar sistema de actualizaciones automáticas
+        if (autoRefreshSystem) {
+            autoRefreshSystem.stop();
+        }
+        autoRefreshSystem = setupAutoRefresh();
         
         console.log("SharingManager inicializado correctamente");
     }
@@ -356,29 +363,53 @@ const SharingManager = (() => {
             const [owners, goalIndices] = await contract.getSharedWithMeGoals();
             console.log("Objetivos compartidos recibidos:", { owners, goalIndices });
             
-            // Actualizar contador
-            sharedGoalsCount.textContent = owners.length;
+            // Array para almacenar objetivos válidos (que aún tienen acceso)
+            let validGoals = [];
             
-            // Limpiar lista
-            sharedGoalsList.innerHTML = '';
-            
-            if (owners.length === 0) {
-                sharedGoalsList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🔄</div>
-                        <div class="empty-state-text">No tienes objetivos compartidos contigo aún.</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Procesar cada objetivo compartido
+            // Verificar cada objetivo compartido para confirmar acceso
             for (let i = 0; i < owners.length; i++) {
                 const owner = owners[i];
                 const index = typeof goalIndices[i].toNumber === 'function' ? 
                               goalIndices[i].toNumber() : Number(goalIndices[i]);
                 
-                console.log(`Procesando objetivo compartido ${i}: owner=${owner}, index=${index}`);
+                console.log(`Verificando acceso a objetivo compartido ${i}: owner=${owner}, index=${index}`);
+                
+                try {
+                    // Verificar si todavía tenemos acceso verificando nuestro rol
+                    const role = await contract.getUserRole(owner, index, userAccount);
+                    const roleValue = typeof role === 'object' && role.toNumber ? role.toNumber() : Number(role);
+                    
+                    // Si el rol es mayor que 0, aún tenemos acceso
+                    if (roleValue > 0) {
+                        validGoals.push({ owner, index });
+                    } else {
+                        console.log(`Acceso revocado para objetivo: owner=${owner}, index=${index}`);
+                    }
+                } catch (error) {
+                    console.error(`Error al verificar acceso a objetivo (${owner}, ${index}):`, error);
+                    // Si hay error, asumimos que ya no tenemos acceso
+                }
+            }
+            
+            // Actualizar contador con el número real de objetivos con acceso
+            sharedGoalsCount.textContent = validGoals.length;
+            
+            // Limpiar lista
+            sharedGoalsList.innerHTML = '';
+            
+            if (validGoals.length === 0) {
+                sharedGoalsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔄</div>
+                        <div class="empty-state-text">No tienes objetivos compartidos contigo en este momento.</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Procesar cada objetivo compartido válido
+            for (const { owner, index } of validGoals) {
+                console.log(`Procesando objetivo compartido: owner=${owner}, index=${index}`);
                 
                 // Obtener información detallada del objetivo
                 try {
@@ -622,6 +653,114 @@ const SharingManager = (() => {
         }
     }
     
+    // Sistema de actualización periódica
+    function setupAutoRefresh() {
+        console.log("Configurando actualización automática...");
+        
+        // Actualizar datos compartidos cada 30 segundos
+        const REFRESH_INTERVAL = 30000; // 30 segundos
+        
+        // Función para actualizar datos compartidos
+        function refreshSharedData() {
+            console.log("Actualizando datos compartidos automáticamente...");
+            
+            // Solo actualizar si estamos en la tab de compartidos
+            if (tabSharedGoals && tabSharedGoals.classList.contains('active')) {
+                loadSharedGoals();
+            }
+        }
+        
+        // Iniciar intervalo de actualización
+        const refreshInterval = setInterval(refreshSharedData, REFRESH_INTERVAL);
+        
+        // También actualizar cuando el usuario cambie a la pestaña compartida
+        if (tabSharedGoals) {
+            tabSharedGoals.addEventListener('click', function() {
+                // Actualizar inmediatamente al cambiar a esta pestaña
+                setTimeout(refreshSharedData, 300); // Pequeño retraso para permitir cambio de UI
+            });
+        }
+        
+        // Escuchar eventos del contrato relacionados con compartir
+        if (contract) {
+            try {
+                // Escuchar evento de revocación de acceso
+                contract.on("UserAccessRevoked", (goalOwner, goalIndex, user) => {
+                    console.log(`Evento UserAccessRevoked recibido: ${goalOwner}, ${goalIndex}, ${user}`);
+                    
+                    // Si el usuario revocado es el actual, actualizar la lista
+                    if (user.toLowerCase() === userAccount.toLowerCase()) {
+                        console.log("Acceso revocado para el usuario actual, actualizando lista...");
+                        loadSharedGoals();
+                        
+                        // Mostrar notificación
+                        showNotification("Acceso revocado", "Ya no tienes acceso a un objetivo compartido.", "warning");
+                    }
+                });
+                
+                // Escuchar evento de concesión de acceso
+                contract.on("UserAccessGranted", (goalOwner, goalIndex, user, role, userName) => {
+                    console.log(`Evento UserAccessGranted recibido: ${goalOwner}, ${goalIndex}, ${user}`);
+                    
+                    // Si el usuario al que se le da acceso es el actual, actualizar la lista
+                    if (user.toLowerCase() === userAccount.toLowerCase()) {
+                        console.log("Nuevo acceso concedido al usuario actual, actualizando lista...");
+                        loadSharedGoals();
+                        
+                        // Mostrar notificación
+                        showNotification("Nuevo objetivo compartido", "Alguien ha compartido un objetivo contigo.", "success");
+                    }
+                });
+                
+                console.log("Eventos del contrato configurados correctamente");
+            } catch (error) {
+                console.error("Error al configurar eventos del contrato:", error);
+            }
+        }
+        
+        return {
+            stop: function() {
+                clearInterval(refreshInterval);
+                // Desuscribirse de eventos
+                if (contract) {
+                    contract.removeAllListeners("UserAccessRevoked");
+                    contract.removeAllListeners("UserAccessGranted");
+                }
+            }
+        };
+    }
+    
+    // Sistema de notificaciones sencillo
+    function showNotification(title, message, type = "info") {
+        // Crear elemento de notificación
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type} notification-enter`;
+        
+        // Construir contenido
+        notification.innerHTML = `
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+        `;
+        
+        // Añadir al DOM
+        const notificationsContainer = document.getElementById('notifications-container');
+        
+        // Si no existe el contenedor, crearlo
+        if (!notificationsContainer) {
+            const container = document.createElement('div');
+            container.id = 'notifications-container';
+            document.body.appendChild(container);
+        }
+        
+        document.getElementById('notifications-container').appendChild(notification);
+        
+        // Eliminar después de 5 segundos
+        setTimeout(() => {
+            notification.classList.add('notification-exit');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+    
     // API pública
     return {
         init,
@@ -634,7 +773,10 @@ const SharingManager = (() => {
         hideAccessModal,
         revokeAccess,
         loadSharedGoals,
-        retryLoadSharedGoal
+        retryLoadSharedGoal,
+        refreshSharedData: function() {
+            loadSharedGoals();
+        }
     };
 })();
 
@@ -648,6 +790,22 @@ window.shareGoalDirect = function(goalIndex) {
         alert("Error: No se pudo acceder al administrador de compartición");
     }
 };
+
+// Estilos para notificaciones
+function addNotificationStyles() {
+    // Los estilos de notificaciones ya están incluidos en el CSS principal
+    console.log("Estilos de notificaciones cargados");
+}
+
+// Crear contenedor de notificaciones cuando se inicializa
+document.addEventListener('DOMContentLoaded', function() {
+    // Crear contenedor para notificaciones
+    if (!document.getElementById('notifications-container')) {
+        const container = document.createElement('div');
+        container.id = 'notifications-container';
+        document.body.appendChild(container);
+    }
+});
 
 // Exponer al objeto global para los botones
 window.SharingManager = SharingManager;

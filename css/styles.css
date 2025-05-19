@@ -1,3 +1,5 @@
+/* styles.css completamente actualizado */
+
 /* True Apple-inspired design */
 :root {
     --gradient-start: #be3ff8; /* Purple */
@@ -6,8 +8,8 @@
     --text-secondary: #86868b;
     --background-color: #ffffff;
     --card-background: #f5f5f7;
-    --border-radius: 14px;
-    --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    --border-radius: 12px; /* Reducido para aspecto más profesional */
+    --shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
     --transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
     --danger-color: #FF3B30;
     --danger-light: #FFF2F2;
@@ -25,13 +27,14 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     color: var(--text-color);
-    line-height: 1.5;
+    line-height: 1.4;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
+    font-size: 15px;
 }
 
 /* Animated gradient background */
@@ -71,9 +74,9 @@ body {
 
 /* Container layout */
 .container {
-    max-width: 1000px;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 16px;
     position: relative;
 }
 
@@ -82,8 +85,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 24px 0;
-    margin-bottom: 20px;
+    padding: 16px 0;
+    margin-bottom: 16px;
 }
 
 .header-left {
@@ -97,24 +100,24 @@ body {
 }
 
 .wallet-address {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background-color: rgba(0, 0, 0, 0.05);
     border-radius: 20px;
     margin-right: 8px;
 }
 
 .app-title {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     letter-spacing: -0.025em;
     color: var(--text-color);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .app-subtitle {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
     color: var(--text-secondary);
 }
@@ -125,11 +128,11 @@ body {
     align-items: center;
     background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
     color: white;
-    padding: 6px 14px;
+    padding: 4px 12px;
     border-radius: 20px;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
-    margin-top: 10px;
+    margin-top: 8px;
     box-shadow: 0 2px 8px rgba(61, 157, 255, 0.3);
 }
 
@@ -142,8 +145,8 @@ body {
 .card {
     background-color: var(--card-background);
     border-radius: var(--border-radius);
-    padding: 28px;
-    margin-bottom: 24px;
+    padding: 22px;
+    margin-bottom: 20px;
     transition: var(--transition);
     box-shadow: var(--shadow);
 }
@@ -154,31 +157,31 @@ body {
 }
 
 .card-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     color: var(--text-color);
     letter-spacing: -0.01em;
 }
 
 /* Form elements */
 .form-group {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 label {
     display: block;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-color);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 input, select {
     width: 100%;
-    padding: 14px 16px;
-    font-size: 15px;
-    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    border-radius: 8px;
     border: 1px solid #e1e1e6;
     background-color: #fff;
     transition: all 0.2s ease;
@@ -197,10 +200,10 @@ input:focus, select:focus {
     display: inline-block;
     background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
     color: white;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
-    padding: 8px 16px;
-    border-radius: 20px;
+    padding: 7px 14px;
+    border-radius: 16px;
     border: none;
     cursor: pointer;
     transition: all 0.25s ease;
@@ -231,7 +234,7 @@ input:focus, select:focus {
 .sf-button-wide {
     display: block;
     width: 100%;
-    padding: 12px 24px;
+    padding: 10px 20px;
     margin: 0 auto;
 }
 
@@ -283,8 +286,8 @@ input:focus, select:focus {
 .goal-item {
     background-color: white;
     border-radius: var(--border-radius);
-    margin-bottom: 16px;
-    padding: 20px;
+    margin-bottom: 14px;
+    padding: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     transition: var(--transition);
     border-left: 4px solid transparent;
@@ -296,25 +299,25 @@ input:focus, select:focus {
 }
 
 .goal-title {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-color);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
 .goal-deadline {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-secondary);
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 
 .goal-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-top: 8px;
     flex-wrap: wrap;
 }
 
@@ -334,7 +337,7 @@ input:focus, select:focus {
 .goal-owner {
     display: flex;
     align-items: center;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-secondary);
     margin-bottom: 8px;
 }
@@ -345,10 +348,10 @@ input:focus, select:focus {
 
 /* Status badges */
 .status-badge {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 12px;
+    padding: 3px 8px;
+    border-radius: 10px;
     margin-left: 8px;
 }
 
@@ -392,18 +395,18 @@ input:focus, select:focus {
 /* Empty state */
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
+    padding: 30px 20px;
     color: var(--text-secondary);
 }
 
 .empty-state-icon {
-    font-size: 36px;
-    margin-bottom: 12px;
+    font-size: 32px;
+    margin-bottom: 10px;
     opacity: 0.5;
 }
 
 .empty-state-text {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 500;
 }
 
@@ -419,13 +422,13 @@ input:focus, select:focus {
 
 /* Goals section */
 .goals-section {
-    margin-top: 40px;
+    margin-top: 30px;
 }
 
 .section-title {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 600;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     color: var(--text-color);
     letter-spacing: -0.02em;
 }
@@ -456,17 +459,17 @@ input:focus, select:focus {
 
 .modal-content {
     background-color: white;
-    padding: 30px;
-    border-radius: 18px;
+    padding: 24px;
+    border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    max-width: 450px;
+    max-width: 420px;
     width: 100%;
     transform: translateY(20px);
     transition: all 0.3s ease;
 }
 
 .modal-lg {
-    max-width: 600px;
+    max-width: 540px;
 }
 
 .modal-overlay.active .modal-content {
@@ -474,9 +477,9 @@ input:focus, select:focus {
 }
 
 .modal-header {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     color: var(--text-color);
     display: flex;
     align-items: center;
@@ -494,9 +497,9 @@ input:focus, select:focus {
 }
 
 .modal-body {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     color: var(--text-secondary);
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.6;
 }
 
@@ -557,14 +560,14 @@ input:focus, select:focus {
 .tab-buttons {
     display: flex;
     border-bottom: 1px solid #e1e1e6;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .tab-button {
-    padding: 12px 20px;
+    padding: 10px 16px;
     background: none;
     border: none;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--text-secondary);
     cursor: pointer;
@@ -614,31 +617,228 @@ input:focus, select:focus {
 }
 
 .stats-number {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
-    margin-top: 10px;
+    margin-top: 8px;
     color: var(--gradient-end);
 }
 
-/* Two-column layout for desktop - Improved */
-@media (min-width: 768px) {
+/* Notification system */
+#notifications-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+}
+
+.notification {
+    padding: 15px;
+    border-radius: 10px;
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    transform: translateX(30px);
+    transition: all 0.3s ease;
+}
+
+.notification-enter {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification-exit {
+    opacity: 0;
+    transform: translateX(30px);
+}
+
+.notification-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.notification-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.notification-success {
+    border-left: 4px solid var(--success-color);
+}
+
+.notification-warning {
+    border-left: 4px solid var(--warning-color);
+}
+
+.notification-error {
+    border-left: 4px solid var(--danger-color);
+}
+
+.notification-info {
+    border-left: 4px solid var(--info-color);
+}
+
+/* Mejoras para responsividad en múltiples dispositivos */
+
+/* Tablets y dispositivos medianos */
+@media (max-width: 768px) {
     .app-content {
-        display: flex;
-        flex-direction: row;
-        gap: 24px;
+        flex-direction: column;
     }
     
     .sidebar {
-        width: 350px;
-        flex-shrink: 0;
+        width: 100%;
     }
     
     .main-content {
-        flex-grow: 1;
+        width: 100%;
     }
     
-    .form-section,
-    .goals-section {
-        margin-top: 0;
+    .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-right {
+        margin-top: 16px;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .goal-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+    
+    .goal-actions .sf-button {
+        margin-bottom: 8px;
+    }
+}
+
+/* Dispositivos móviles */
+@media (max-width: 480px) {
+    .app-title {
+        font-size: 22px;
+    }
+    
+    .app-subtitle {
+        font-size: 13px;
+    }
+    
+    .sf-button {
+        font-size: 13px;
+        padding: 6px 12px;
+    }
+    
+    .card {
+        padding: 16px;
+    }
+    
+    .goal-item {
+        padding: 14px;
+    }
+    
+    .wallet-address {
+        font-size: 12px;
+        padding: 4px 8px;
+        margin-bottom: 8px;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .header-right {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .modal-content {
+        padding: 20px;
+        width: 90%;
+    }
+    
+    .tab-button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    /* Ajustes para objetivo compartido */
+    .goal-owner {
+        font-size: 12px;
+    }
+    
+    .goal-title {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .goal-title .status-badge {
+        margin-left: 0;
+        margin-top: 5px;
+    }
+    
+    /* Evitar desbordamiento de textos largos */
+    .goal-title span, .goal-deadline, .goal-owner {
+        word-break: break-word;
+    }
+    
+    #notifications-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+/* Mejoras adicionales para experiencia mobile */
+@media (max-width: 360px) {
+    .container {
+        padding: 0 12px;
+    }
+    
+    .app-title {
+        font-size: 20px;
+    }
+    
+    .network-tag {
+        padding: 3px 10px;
+        font-size: 11px;
+    }
+    
+    .sf-button {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+    
+    .goal-actions {
+        flex-direction: column;
+    }
+    
+    .goal-actions .sf-button {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    
+    input, select {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+}
+
+/* Mejoras de usabilidad para dispositivos táctiles */
+@media (pointer: coarse) {
+    .sf-button {
+        min-height: 38px; /* Asegurar botones lo suficientemente grandes para tocar */
+    }
+    
+    input, select, .tab-button {
+        min-height: 42px; /* Campos de entrada más altos para tocar */
+    }
+    
+    /* Más espacio para tocar en elementos importantes */
+    .goal-item {
+        padding-bottom: 20px;
     }
 }
