@@ -20,7 +20,7 @@ const WalletManager = (() => {
     const SOMNIA_CHAIN_ID_HEX = '0xC468'; // Hex of 50312
     
     // Contract address - Make sure this is up to date
-    const CONTRACT_ADDRESS = "0xa834416362bff38f52dA74d601BD12D3e8C336f8";
+    const CONTRACT_ADDRESS = "0xa2330a03f1e3e6de8b611370bca14efe11004469";
     
     // Contract ABI - Updated with all functions from the expanded contract
     const CONTRACT_ABI = [
