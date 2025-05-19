@@ -3,143 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Goal Tracker</title>
-    <!-- Solución: Usar un CDN más confiable para ethers.js -->
+    <title>Objetivos en Somnia</title>
     <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js" type="application/javascript"></script>
     <style>
+        :root {
+            --gradient-start: #be3ff8; /* Color morado */
+            --gradient-end: #3d9dff; /* Color azul */
+            --text-color: #333;
+            --background-color: #f9f9f9;
+            --card-background: white;
+            --border-radius: 15px;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
         body {
-            font-family: Arial, sans-serif;
-            max-width: 500px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 560px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f5f7fa;
+            color: var(--text-color);
         }
+        
         .container {
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
         }
+        
         h1 {
             text-align: center;
-            color: #333;
+            color: var(--text-color);
+            margin-bottom: 30px;
+            font-size: 2.2rem;
         }
-        button {
-            background-color: #4CAF50;
+        
+        .gradient-button {
+            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
+            padding: 12px 24px;
+            border-radius: 30px;
             cursor: pointer;
-            margin-top: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 15px auto;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        button:disabled {
-            background-color: #cccccc;
+        
+        .gradient-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
         }
+        
+        .gradient-button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
         input, select {
             width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
+            padding: 12px 15px;
+            margin-bottom: 15px;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border 0.3s ease;
         }
+        
+        input:focus, select:focus {
+            border-color: var(--gradient-start);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(190, 63, 248, 0.1);
+        }
+        
         .goal-item {
-            background-color: white;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border-left: 4px solid #4CAF50;
+            background-color: var(--card-background);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            border-left: 5px solid #4CAF50;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
         }
+        
+        .goal-item:hover {
+            transform: translateY(-3px);
+        }
+        
         .completed {
-            border-left: 4px solid #9e9e9e;
-            opacity: 0.7;
+            border-left: 5px solid #9e9e9e;
+            opacity: 0.85;
         }
+        
         .connection-status {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
+        
+        .account-info {
+            background: linear-gradient(90deg, rgba(190, 63, 248, 0.1), rgba(61, 157, 255, 0.1));
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        
         .deadline {
-            font-size: 12px;
+            font-size: 14px;
             color: #666;
+            margin-top: 8px;
         }
+        
         .status-badge {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-            margin-left: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 8px;
         }
+        
         .pending {
             background-color: #fff9c4;
             color: #ffa000;
         }
+        
         .completed-badge {
             background-color: #e8f5e9;
             color: #4CAF50;
         }
+        
         .expired {
             background-color: #ffebee;
             color: #f44336;
         }
+        
         #metamask-status {
-            color: #f44336;
+            padding: 12px;
+            border-radius: 10px;
+            margin: 15px 0;
             text-align: center;
-            font-weight: bold;
-            margin-top: 10px;
-            margin-bottom: 10px;
-            padding: 10px;
-            background-color: #f8f8f8;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            font-weight: 500;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
         }
+        
+        .status-error {
+            color: #f44336;
+            background-color: rgba(244, 67, 54, 0.1);
+        }
+        
+        .status-success {
+            color: #4CAF50;
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        
+        .status-warning {
+            color: #ff9800;
+            background-color: rgba(255, 152, 0, 0.1);
+        }
+        
         .network-info {
-            background-color: #e8f5e9;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-            font-size: 14px;
+            background: linear-gradient(90deg, rgba(190, 63, 248, 0.05), rgba(61, 157, 255, 0.05));
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .wallet-info {
-            margin-top: 10px;
+        
+        .network-badge {
+            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-left: 8px;
+            display: inline-block;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin: 30px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(190, 63, 248, 0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        /* Loader spinner */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid var(--gradient-start);
+            border-right: 3px solid var(--gradient-end);
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Transiciones suaves */
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .no-goals {
+            text-align: center;
+            padding: 30px;
+            color: #757575;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container fade-in">
         <h1>Mi Registro de Objetivos</h1>
         
         <div class="network-info">
-            Esta DApp funciona en la red <strong>Somnia testnet</strong>. 
-            <br>Asegúrate de que MetaMask esté configurado para esta red.
+            Esta DApp funciona en la red <span class="network-badge">Somnia Testnet</span>
         </div>
         
         <div class="connection-status" id="connection-status">
-            <div id="metamask-status">Cargando... Por favor espera unos segundos.</div>
-            <button id="connect-wallet">Conectar Wallet</button>
-            <p id="account-info" style="display: none;"></p>
-        </div>
-        
-        <div class="wallet-info">
-            <p>Para usar esta DApp:</p>
-            <ol>
-                <li>Instala <a href="https://metamask.io/download/" target="_blank">MetaMask</a> si aún no lo tienes</li>
-                <li>Configura la red Somnia en MetaMask (ID de cadena: 17000)</li>
-                <li>Consigue ETH de prueba en <a href="https://testnet.somnia.network/" target="_blank">Somnia Faucet</a></li>
-            </ol>
+            <div id="metamask-status">Cargando aplicación...</div>
+            <button id="connect-wallet" class="gradient-button">Conectar Wallet</button>
+            <div id="account-info" class="account-info" style="display: none;"></div>
         </div>
         
         <div id="app" style="display: none;">
+            <h2 class="section-title">Añadir Nuevo Objetivo</h2>
             <div id="goal-form">
-                <h3>Añadir Nuevo Objetivo</h3>
-                <input type="text" id="goal-text" placeholder="¿Cuál es tu objetivo?">
-                <label for="deadline">Fecha límite:</label>
-                <input type="date" id="deadline">
-                <button id="add-goal">Registrar Objetivo</button>
+                <div class="form-group">
+                    <label for="goal-text">¿Cuál es tu objetivo?</label>
+                    <input type="text" id="goal-text" placeholder="Escribe aquí tu objetivo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="deadline">Fecha límite:</label>
+                    <input type="date" id="deadline">
+                </div>
+                
+                <button id="add-goal" class="gradient-button">Registrar Objetivo</button>
             </div>
             
-            <div id="goals-section">
-                <h3>Mis Objetivos</h3>
-                <div id="goals-list"></div>
-            </div>
+            <h2 class="section-title">Mis Objetivos</h2>
+            <div id="goals-list"></div>
         </div>
     </div>
 
@@ -152,6 +293,7 @@
                     console.error("Ethers no está definido. Intentando cargar de nuevo...");
                     document.getElementById('metamask-status').textContent = 
                         "Error: No se pudo cargar la biblioteca ethers.js. Intenta actualizar la página.";
+                    document.getElementById('metamask-status').className = "status-error";
                     
                     // Intentamos cargar ethers.js dinámicamente como último recurso
                     var script = document.createElement('script');
@@ -198,7 +340,11 @@
             const metamaskStatus = document.getElementById('metamask-status');
             
             // Constantes
-            const Somnia_CHAIN_ID = 50312;
+            const SOMNIA_CHAIN_ID = 50312;
+            const SOMNIA_CHAIN_ID_HEX = '0xC468'; // Hex de 50312
+            
+            // Intentar reconectar si hay una sesión previa
+            checkPreviousSession();
             
             // Verificar si MetaMask está disponible
             function checkMetaMaskAvailability() {
@@ -207,39 +353,71 @@
                 // Comprobar si MetaMask está disponible
                 if (typeof window.ethereum !== 'undefined') {
                     metamaskStatus.textContent = "MetaMask detectado ✅ Puedes conectar tu wallet.";
-                    metamaskStatus.style.color = "#4CAF50";
+                    metamaskStatus.className = "status-success";
                     return true;
                 } else {
                     metamaskStatus.textContent = "MetaMask no detectado. Por favor instala MetaMask desde metamask.io y recarga la página.";
-                    metamaskStatus.style.color = "#f44336";
+                    metamaskStatus.className = "status-error";
                     connectBtn.disabled = true;
                     return false;
                 }
             }
             
-            // Verificar cuando el DOM está completamente cargado
-            checkMetaMaskAvailability();
+            // Comprobar si hay una sesión anterior guardada
+            async function checkPreviousSession() {
+                if (typeof window.ethereum !== 'undefined') {
+                    try {
+                        // Verificar si ya estamos conectados (metamask guarda las conexiones)
+                        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                        if (accounts && accounts.length > 0) {
+                            // Si hay cuentas conectadas, reconectar automáticamente
+                            connectWallet(true);
+                        } else {
+                            // No hay cuentas conectadas, mostrar botón de conexión
+                            checkMetaMaskAvailability();
+                        }
+                    } catch (error) {
+                        console.error("Error al verificar sesión anterior:", error);
+                        checkMetaMaskAvailability();
+                    }
+                } else {
+                    checkMetaMaskAvailability();
+                }
+            }
             
             // Inicializar
-            connectBtn.addEventListener('click', connectWallet);
+            connectBtn.addEventListener('click', () => connectWallet(false));
             addGoalBtn.addEventListener('click', createGoal);
             
             // Función para conectar wallet
-            async function connectWallet() {
+            async function connectWallet(isAutoConnect = false) {
                 try {
                     // Verificar si MetaMask está instalado
                     if (typeof window.ethereum === 'undefined') {
                         metamaskStatus.textContent = "MetaMask no detectado. Por favor instala MetaMask desde metamask.io";
+                        metamaskStatus.className = "status-error";
                         return;
                     }
                     
-                    metamaskStatus.textContent = "Solicitando acceso a la wallet...";
+                    if (!isAutoConnect) {
+                        metamaskStatus.innerHTML = "<span class='loader'></span> Solicitando acceso a la wallet...";
+                        metamaskStatus.className = "status-warning";
+                    }
                     
-                    // Solicitar cuentas
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    // Solicitar cuentas o usar las existentes
+                    const accounts = isAutoConnect 
+                        ? await window.ethereum.request({ method: 'eth_accounts' })
+                        : await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        
+                    if (!accounts || accounts.length === 0) {
+                        metamaskStatus.textContent = "No se encontraron cuentas conectadas. Por favor conecta tu wallet.";
+                        metamaskStatus.className = "status-warning";
+                        return;
+                    }
+                    
                     userAccount = accounts[0];
                     
-                    metamaskStatus.textContent = "Wallet conectada. Verificando red...";
+                    metamaskStatus.innerHTML = "<span class='loader'></span> Wallet conectada. Verificando red...";
                     
                     // Configurar ethers
                     provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -249,47 +427,52 @@
                     const network = await provider.getNetwork();
                     console.log("Red actual:", network.name, "Chain ID:", network.chainId);
                     
-                    if (network.chainId !== Somnia_CHAIN_ID) {
-                        metamaskStatus.textContent = `Red incorrecta: ${network.name} (ID: ${network.chainId}). Por favor, cambia a Somnia (ID: ${Somnia_CHAIN_ID})`;
+                    if (network.chainId !== SOMNIA_CHAIN_ID) {
+                        metamaskStatus.innerHTML = `<span class='loader'></span> Red incorrecta. Cambiando a Somnia Testnet...`;
                         
                         // Intentar cambiar automáticamente a Somnia
                         try {
                             await window.ethereum.request({
                                 method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: '0x4268' }], // 0x4268 es el hex de 17000
+                                params: [{ chainId: SOMNIA_CHAIN_ID_HEX }],
                             });
-                            metamaskStatus.textContent = "Cambiando a red Somnia...";
-                            setTimeout(connectWallet, 1500); // Intentar conectar de nuevo después del cambio
+                            // Reconectar después del cambio de red
+                            setTimeout(() => connectWallet(true), 1500);
+                            return;
                         } catch (switchError) {
-                            // Si el usuario no tiene Somnia configurada, intentamos agregarla
+                            console.error("Error al cambiar red:", switchError);
+                            // Si la red no existe en MetaMask, intentamos agregarla
                             if (switchError.code === 4902) {
                                 try {
                                     await window.ethereum.request({
                                         method: 'wallet_addEthereumChain',
                                         params: [{
-                                            chainId: '0x4268',
-                                            chainName: 'Somnia Test Network',
+                                            chainId: SOMNIA_CHAIN_ID_HEX,
+                                            chainName: 'Somnia Testnet',
                                             nativeCurrency: {
-                                                name: 'ETH',
-                                                symbol: 'ETH',
+                                                name: 'STI',
+                                                symbol: 'STI',
                                                 decimals: 18
                                             },
                                             rpcUrls: ['https://dream-rpc.somnia.network'],
                                             blockExplorerUrls: ['https://shannon-explorer.somnia.network']
                                         }]
                                     });
-                                    metamaskStatus.textContent = "Red Somnia añadida. Intentando conectar...";
-                                    setTimeout(connectWallet, 1500);
+                                    metamaskStatus.innerHTML = "<span class='loader'></span> Red Somnia añadida. Conectando...";
+                                    setTimeout(() => connectWallet(true), 1500);
+                                    return;
                                 } catch (addError) {
                                     metamaskStatus.textContent = "No se pudo añadir la red Somnia. Por favor, configúrala manualmente en MetaMask.";
+                                    metamaskStatus.className = "status-error";
                                     console.error("Error al añadir red:", addError);
+                                    return;
                                 }
                             } else {
-                                metamaskStatus.textContent = "No se pudo cambiar a la red Somnia. Por favor, cámbiala manualmente en MetaMask.";
-                                console.error("Error al cambiar red:", switchError);
+                                metamaskStatus.textContent = "No se pudo cambiar a la red Somnia. Por favor, cámbiala manualmente.";
+                                metamaskStatus.className = "status-error";
+                                return;
                             }
                         }
-                        return;
                     }
                     
                     // Crear contrato
@@ -300,28 +483,27 @@
                     accountInfo.style.display = 'block';
                     accountInfo.innerHTML = `Conectado: ${userAccount.substring(0, 6)}...${userAccount.substring(38)}`;
                     appSection.style.display = 'block';
+                    appSection.className = 'fade-in';
                     metamaskStatus.textContent = "✅ Conectado a la red Somnia correctamente.";
-                    metamaskStatus.style.color = "#4CAF50";
+                    metamaskStatus.className = "status-success";
                     
                     // Cargar objetivos existentes
                     loadGoals();
                     
                     // Escuchar eventos de cambio de cuenta
                     window.ethereum.on('accountsChanged', function (accounts) {
-                        metamaskStatus.textContent = "Cuenta cambiada. Recargando...";
                         window.location.reload();
                     });
                     
                     // Escuchar eventos de cambio de red
                     window.ethereum.on('chainChanged', function (chainId) {
-                        metamaskStatus.textContent = "Red cambiada. Recargando...";
                         window.location.reload();
                     });
                     
                 } catch (error) {
                     console.error("Error al conectar wallet:", error);
                     metamaskStatus.textContent = `Error: ${error.message}`;
-                    metamaskStatus.style.color = "#f44336";
+                    metamaskStatus.className = "status-error";
                 }
             }
             
@@ -346,11 +528,12 @@
                     
                     // Deshabilitar botón mientras se procesa
                     addGoalBtn.disabled = true;
-                    metamaskStatus.textContent = "Enviando transacción...";
+                    metamaskStatus.innerHTML = "<span class='loader'></span> Enviando transacción...";
+                    metamaskStatus.className = "status-warning";
                     
                     // Llamar al contrato
                     const tx = await contract.addGoal(text, deadlineTimestamp);
-                    metamaskStatus.textContent = "Transacción enviada. Esperando confirmación...";
+                    metamaskStatus.innerHTML = "<span class='loader'></span> Transacción enviada. Esperando confirmación...";
                     
                     await tx.wait();
                     
@@ -362,12 +545,12 @@
                     loadGoals();
                     
                     metamaskStatus.textContent = "¡Objetivo registrado con éxito en la blockchain!";
-                    metamaskStatus.style.color = "#4CAF50";
+                    metamaskStatus.className = "status-success";
                     
                 } catch (error) {
                     console.error("Error al crear objetivo:", error);
                     metamaskStatus.textContent = `Error: ${error.message}`;
-                    metamaskStatus.style.color = "#f44336";
+                    metamaskStatus.className = "status-error";
                 } finally {
                     addGoalBtn.disabled = false;
                 }
@@ -376,29 +559,29 @@
             // Marcar objetivo como completado
             async function completeGoal(index) {
                 try {
-                    metamaskStatus.textContent = "Enviando transacción para completar objetivo...";
-                    metamaskStatus.style.color = "#ffa000";
+                    metamaskStatus.innerHTML = "<span class='loader'></span> Enviando transacción para completar objetivo...";
+                    metamaskStatus.className = "status-warning";
                     
                     const tx = await contract.completeGoal(index);
-                    metamaskStatus.textContent = "Transacción enviada. Esperando confirmación...";
+                    metamaskStatus.innerHTML = "<span class='loader'></span> Transacción enviada. Esperando confirmación...";
                     
                     await tx.wait();
                     loadGoals();
                     
                     metamaskStatus.textContent = "¡Objetivo marcado como completado exitosamente!";
-                    metamaskStatus.style.color = "#4CAF50";
+                    metamaskStatus.className = "status-success";
                 } catch (error) {
                     console.error("Error al completar objetivo:", error);
                     metamaskStatus.textContent = `Error: ${error.message}`;
-                    metamaskStatus.style.color = "#f44336";
+                    metamaskStatus.className = "status-error";
                 }
             }
             
             // Cargar objetivos desde el contrato
             async function loadGoals() {
                 try {
-                    metamaskStatus.textContent = "Cargando objetivos...";
-                    metamaskStatus.style.color = "#ffa000";
+                    metamaskStatus.innerHTML = "<span class='loader'></span> Cargando objetivos...";
+                    metamaskStatus.className = "status-warning";
                     
                     const goals = await contract.getUserGoals();
                     
@@ -406,16 +589,16 @@
                     goalsList.innerHTML = '';
                     
                     if (goals.length === 0) {
-                        goalsList.innerHTML = '<p>No tienes objetivos registrados aún.</p>';
+                        goalsList.innerHTML = '<div class="no-goals">No tienes objetivos registrados aún.</div>';
                         metamaskStatus.textContent = "No hay objetivos registrados.";
-                        metamaskStatus.style.color = "#4CAF50";
+                        metamaskStatus.className = "status-success";
                         return;
                     }
                     
                     // Agregar cada objetivo a la lista
                     goals.forEach((goal, index) => {
                         const goalItem = document.createElement('div');
-                        goalItem.className = `goal-item ${goal.completed ? 'completed' : ''}`;
+                        goalItem.className = `goal-item ${goal.completed ? 'completed' : ''} fade-in`;
                         
                         const currentTimestamp = Math.floor(Date.now() / 1000);
                         const isExpired = !goal.completed && currentTimestamp > goal.deadline;
@@ -435,20 +618,20 @@
                             <h4>${goal.text} ${statusBadge}</h4>
                             <p class="deadline">Fecha límite: ${deadlineDate}</p>
                             ${!goal.completed && !isExpired ? 
-                                `<button onclick="completeGoal(${index})">Marcar como completado</button>` : ''}
+                                `<button onclick="completeGoal(${index})" class="gradient-button">Marcar como completado</button>` : ''}
                         `;
                         
                         goalsList.appendChild(goalItem);
                     });
                     
                     metamaskStatus.textContent = `${goals.length} objetivo(s) cargado(s) correctamente.`;
-                    metamaskStatus.style.color = "#4CAF50";
+                    metamaskStatus.className = "status-success";
                     
                 } catch (error) {
                     console.error("Error al cargar objetivos:", error);
-                    goalsList.innerHTML = '<p>Error al cargar objetivos. Por favor intenta de nuevo.</p>';
+                    goalsList.innerHTML = '<div class="no-goals">Error al cargar objetivos. Por favor intenta de nuevo.</div>';
                     metamaskStatus.textContent = `Error al cargar objetivos: ${error.message}`;
-                    metamaskStatus.style.color = "#f44336";
+                    metamaskStatus.className = "status-error";
                 }
             }
             
