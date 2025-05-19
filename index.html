@@ -198,7 +198,7 @@
             const metamaskStatus = document.getElementById('metamask-status');
             
             // Constantes
-            const HOLESKY_CHAIN_ID = 17000;
+            const HOLESKY_CHAIN_ID = 50312;
             
             // Verificar si MetaMask está disponible
             function checkMetaMaskAvailability() {
@@ -274,8 +274,8 @@
                                                 symbol: 'ETH',
                                                 decimals: 18
                                             },
-                                            rpcUrls: ['https://ethereum-holesky.publicnode.com'],
-                                            blockExplorerUrls: ['https://holesky.etherscan.io']
+                                            rpcUrls: ['https://dream-rpc.somnia.network'],
+                                            blockExplorerUrls: ['https://shannon-explorer.somnia.network']
                                         }]
                                     });
                                     metamaskStatus.textContent = "Red Holesky añadida. Intentando conectar...";
