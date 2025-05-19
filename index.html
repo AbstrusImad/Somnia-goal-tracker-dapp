@@ -234,5 +234,51 @@
             }
         });
     </script>
+
+    <!-- Código para garantizar que los botones Share Goal funcionen -->
+    <script>
+        // Script para configurar los botones de compartir
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Configurando botones de compartir...");
+            
+            // Función para actualizar todos los botones de compartir
+            function setupShareButtons() {
+                // Buscar todos los botones de compartir (pueden ser múltiples)
+                const shareButtons = document.querySelectorAll('button[id^="share-button-"]');
+                
+                console.log(`Encontrados ${shareButtons.length} botones de compartir`);
+                
+                shareButtons.forEach(button => {
+                    const goalIndex = button.id.replace('share-button-', '');
+                    console.log(`Configurando botón de compartir para objetivo ${goalIndex}`);
+                    
+                    // Agregar atributo onclick directo
+                    button.setAttribute('onclick', `shareGoalDirect(${goalIndex})`);
+                });
+            }
+            
+            // Configurar inmediatamente y luego cada segundo durante 5 segundos
+            // (para capturar botones que se añaden dinámicamente)
+            setupShareButtons();
+            
+            let attempts = 0;
+            const interval = setInterval(() => {
+                setupShareButtons();
+                attempts++;
+                if (attempts >= 5) clearInterval(interval);
+            }, 1000);
+            
+            // También configurar los botones del modal de compartir
+            const shareBtn = document.getElementById('share-confirm');
+            if (shareBtn) {
+                shareBtn.setAttribute('onclick', 'SharingManager.confirmShareGoal()');
+            }
+            
+            const cancelShareBtn = document.getElementById('share-cancel');
+            if (cancelShareBtn) {
+                cancelShareBtn.setAttribute('onclick', 'SharingManager.hideShareModal()');
+            }
+        });
+    </script>
 </body>
 </html>
