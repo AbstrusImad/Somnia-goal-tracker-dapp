@@ -5,512 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Goal Tracker</title>
     <script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js" type="application/javascript"></script>
-    <style>
-        /* True Apple-inspired design */
-        :root {
-            --gradient-start: #be3ff8; /* Purple */
-            --gradient-end: #3d9dff; /* Blue */
-            --text-color: #1d1d1f;
-            --text-secondary: #86868b;
-            --background-color: #ffffff;
-            --card-background: #f5f5f7;
-            --border-radius: 14px;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            --transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            --danger-color: #FF3B30;
-            --danger-light: #FFF2F2;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: var(--text-color);
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            margin: 0;
-            min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
-        }
-        
-        /* Animated gradient background */
-        .gradient-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: #ffffff;
-            overflow: hidden;
-        }
-        
-        .gradient-animation {
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, 
-                rgba(190, 63, 248, 0.1) 0%, 
-                rgba(61, 157, 255, 0.1) 25%, 
-                rgba(190, 63, 248, 0.1) 50%, 
-                rgba(61, 157, 255, 0.1) 75%, 
-                rgba(190, 63, 248, 0.1) 100%);
-            opacity: 0.67;
-            top: -50%;
-            left: -50%;
-            animation: gradientMove 15s ease infinite;
-            background-size: 200% 200%;
-        }
-        
-        @keyframes gradientMove {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            50% { transform: translate(5%, 5%) rotate(5deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-        
-        /* Container layout */
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 20px;
-            position: relative;
-        }
-        
-        /* Header section with right-aligned connect button */
-        .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 24px 0;
-            margin-bottom: 20px;
-        }
-        
-        .header-left {
-            text-align: left;
-        }
-        
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .wallet-address {
-            font-size: 14px;
-            font-weight: 500;
-            padding: 8px 12px;
-            background-color: rgba(0, 0, 0, 0.05);
-            border-radius: 20px;
-            margin-right: 8px;
-        }
-        
-        .app-title {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-            color: var(--text-color);
-            margin-bottom: 4px;
-        }
-        
-        .app-subtitle {
-            font-size: 16px;
-            font-weight: 400;
-            color: var(--text-secondary);
-        }
-        
-        /* Network tag */
-        .network-tag {
-            display: inline-flex;
-            align-items: center;
-            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-            margin-top: 10px;
-            box-shadow: 0 2px 8px rgba(61, 157, 255, 0.3);
-        }
-        
-        /* Hidden status messages */
-        #metamask-status {
-            display: none;
-        }
-        
-        /* Apple-style cards */
-        .card {
-            background-color: var(--card-background);
-            border-radius: var(--border-radius);
-            padding: 28px;
-            margin-bottom: 24px;
-            transition: var(--transition);
-            box-shadow: var(--shadow);
-        }
-        
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-        }
-        
-        .card-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: var(--text-color);
-            letter-spacing: -0.01em;
-        }
-        
-        /* Form elements */
-        .form-group {
-            margin-bottom: 24px;
-        }
-        
-        label {
-            display: block;
-            font-size: 15px;
-            font-weight: 500;
-            color: var(--text-color);
-            margin-bottom: 8px;
-        }
-        
-        input {
-            width: 100%;
-            padding: 14px 16px;
-            font-size: 15px;
-            border-radius: 10px;
-            border: 1px solid #e1e1e6;
-            background-color: #fff;
-            transition: all 0.2s ease;
-            color: var(--text-color);
-            font-family: inherit;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: var(--gradient-start);
-            box-shadow: 0 0 0 3px rgba(190, 63, 248, 0.1);
-        }
-        
-        /* SF Buttons - Apple style */
-        .sf-button {
-            display: inline-block;
-            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
-            color: white;
-            font-size: 15px;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            text-align: center;
-            letter-spacing: -0.01em;
-            box-shadow: 0 4px 12px rgba(190, 63, 248, 0.2);
-            white-space: nowrap;
-        }
-        
-        .sf-button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(190, 63, 248, 0.25);
-            opacity: 0.95;
-        }
-        
-        .sf-button:active {
-            transform: translateY(1px);
-            box-shadow: 0 2px 8px rgba(190, 63, 248, 0.25);
-        }
-        
-        .sf-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .sf-button-wide {
-            display: block;
-            width: 100%;
-            padding: 12px 24px;
-            margin: 0 auto;
-        }
-        
-        /* Danger button */
-        .sf-button-danger {
-            background: linear-gradient(90deg, #FF3B30, #FF8370);
-            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.25);
-        }
-        
-        .sf-button-danger:hover {
-            box-shadow: 0 6px 16px rgba(255, 59, 48, 0.3);
-        }
-        
-        /* Status messages */
-        .status-message {
-            padding: 14px 20px;
-            border-radius: 12px;
-            margin: 16px auto;
-            font-size: 15px;
-            font-weight: 500;
-            text-align: center;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .status-error {
-            background-color: #FFF2F2;
-            color: #FF3B30;
-        }
-        
-        .status-success {
-            background-color: #F0FFF0;
-            color: #34C759;
-        }
-        
-        .status-warning {
-            background-color: #FFFAF0;
-            color: #FF9500;
-        }
-        
-        .status-info {
-            background-color: #F5F9FF;
-            color: #007AFF;
-        }
-        
-        /* Goal items */
-        .goal-item {
-            background-color: white;
-            border-radius: var(--border-radius);
-            margin-bottom: 16px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            transition: var(--transition);
-            border-left: 4px solid transparent;
-        }
-        
-        .goal-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        }
-        
-        .goal-title {
-            font-size: 17px;
-            font-weight: 600;
-            color: var(--text-color);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .goal-deadline {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 18px;
-        }
-        
-        .goal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .goal-item.completed {
-            border-left-color: #34C759;
-        }
-        
-        .goal-item.pending {
-            border-left-color: #FF9500;
-        }
-        
-        .goal-item.expired {
-            border-left-color: #FF3B30;
-        }
-        
-        /* Status badges */
-        .status-badge {
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 12px;
-            margin-left: 8px;
-        }
-        
-        .badge-pending {
-            background-color: #FFF5E5;
-            color: #FF9500;
-        }
-        
-        .badge-completed {
-            background-color: #E8F9EC;
-            color: #34C759;
-        }
-        
-        .badge-expired {
-            background-color: #FFEFEF;
-            color: #FF3B30;
-        }
-        
-        /* Loader */
-        .loader {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 2px solid white;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-secondary);
-        }
-        
-        .empty-state-icon {
-            font-size: 36px;
-            margin-bottom: 12px;
-            opacity: 0.5;
-        }
-        
-        .empty-state-text {
-            font-size: 16px;
-            font-weight: 500;
-        }
-        
-        /* Animations */
-        .fade-in {
-            animation: fadeIn 0.5s ease forwards;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Goals section */
-        .goals-section {
-            margin-top: 40px;
-        }
-        
-        .section-title {
-            font-size: 22px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--text-color);
-            letter-spacing: -0.02em;
-        }
-        
-        /* Modal styling */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.4);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .modal-content {
-            background-color: white;
-            padding: 30px;
-            border-radius: 18px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            max-width: 450px;
-            width: 100%;
-            transform: translateY(20px);
-            transition: all 0.3s ease;
-        }
-        
-        .modal-overlay.active .modal-content {
-            transform: translateY(0);
-        }
-        
-        .modal-header {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-        }
-        
-        .modal-header .warning-icon {
-            margin-right: 10px;
-            color: var(--danger-color);
-        }
-        
-        .modal-body {
-            margin-bottom: 25px;
-            color: var(--text-secondary);
-            font-size: 15px;
-            line-height: 1.6;
-        }
-        
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-        
-        .modal-cancel {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--text-color);
-            box-shadow: none;
-        }
-        
-        /* Two-column layout for desktop - Improved */
-        @media (min-width: 768px) {
-            .app-content {
-                display: flex;
-                flex-direction: row;
-                gap: 24px;
-            }
-            
-            .sidebar {
-                width: 350px;
-                flex-shrink: 0;
-            }
-            
-            .main-content {
-                flex-grow: 1;
-            }
-            
-            .form-section,
-            .goals-section {
-                margin-top: 0;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <!-- Animated gradient background -->
@@ -537,38 +32,65 @@
         <!-- Hidden status messages -->
         <div id="metamask-status" class="status-message status-info">Loading application...</div>
         
-        <!-- Main Content Area - Redesigned layout -->
+        <!-- Main Content Area -->
         <div id="app" style="display: none;">
-            <div class="app-content">
-                <!-- Sidebar with form -->
-                <div class="sidebar">
-                    <!-- Form Section -->
-                    <div class="form-section">
-                        <h2 class="section-title">Create New Goal</h2>
-                        <div class="card">
-                            <div class="form-group">
-                                <label for="goal-text">What's your goal?</label>
-                                <input type="text" id="goal-text" placeholder="Enter your goal here">
+            <!-- Navigation Tabs -->
+            <div class="tabs-container">
+                <div class="tab-buttons">
+                    <button id="tab-my-goals" class="tab-button active">My Goals</button>
+                    <button id="tab-shared-goals" class="tab-button">Shared With Me</button>
+                </div>
+            </div>
+
+            <!-- My Goals Content -->
+            <div id="content-my-goals" class="tab-content active">
+                <div class="app-content">
+                    <!-- Sidebar with form -->
+                    <div class="sidebar">
+                        <!-- Form Section -->
+                        <div class="form-section">
+                            <h2 class="section-title">Create New Goal</h2>
+                            <div class="card">
+                                <div class="form-group">
+                                    <label for="goal-text">What's your goal?</label>
+                                    <input type="text" id="goal-text" placeholder="Enter your goal here">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="deadline">Deadline</label>
+                                    <input type="date" id="deadline">
+                                </div>
+                                
+                                <button id="add-goal" class="sf-button sf-button-wide">Save Goal</button>
                             </div>
-                            
-                            <div class="form-group">
-                                <label for="deadline">Deadline</label>
-                                <input type="date" id="deadline">
+                        </div>
+                    </div>
+                    
+                    <!-- Main content area -->
+                    <div class="main-content">
+                        <!-- Goals Section -->
+                        <div class="goals-section">
+                            <h2 class="section-title">My Goals</h2>
+                            <div id="goals-list">
+                                <!-- Goals will be loaded here -->
                             </div>
-                            
-                            <button id="add-goal" class="sf-button sf-button-wide">Save Goal</button>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Main content area -->
-                <div class="main-content">
-                    <!-- Goals Section -->
-                    <div class="goals-section">
-                        <h2 class="section-title">My Goals</h2>
-                        <div id="goals-list">
-                            <!-- Goals will be loaded here -->
-                        </div>
+            </div>
+
+            <!-- Shared With Me Content -->
+            <div id="content-shared-goals" class="tab-content">
+                <div class="shared-stats">
+                    <div class="card stats-card">
+                        <h3>Shared Goals</h3>
+                        <div id="shared-goals-count" class="stats-number">0</div>
+                    </div>
+                </div>
+                <div class="shared-list-container">
+                    <h2 class="section-title">Goals Shared With Me</h2>
+                    <div id="shared-goals-list">
+                        <!-- Shared goals will be loaded here -->
                     </div>
                 </div>
             </div>
@@ -590,394 +112,88 @@
                 </div>
             </div>
         </div>
+
+        <!-- Share Goal Modal -->
+        <div id="share-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="share-icon">🔗</span>
+                    <span>Share Goal</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="share-address">Wallet Address</label>
+                        <input type="text" id="share-address" placeholder="0x...">
+                    </div>
+                    <div class="form-group">
+                        <label for="share-name">Name (Optional)</label>
+                        <input type="text" id="share-name" placeholder="Name for this person">
+                    </div>
+                    <div class="form-group">
+                        <label for="share-role">Permission Level</label>
+                        <select id="share-role">
+                            <option value="1">Viewer (can only view)</option>
+                            <option value="2">Editor (can view and edit)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="share-cancel" class="sf-button modal-cancel">Cancel</button>
+                    <button id="share-confirm" class="sf-button">Share Goal</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Goal Modal -->
+        <div id="edit-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="edit-icon">✏️</span>
+                    <span>Edit Goal</span>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit-text">Goal Text</label>
+                        <input type="text" id="edit-text">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-deadline">Deadline</label>
+                        <input type="date" id="edit-deadline">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="edit-cancel" class="sf-button modal-cancel">Cancel</button>
+                    <button id="edit-confirm" class="sf-button">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Access Management Modal -->
+        <div id="access-modal" class="modal-overlay">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <span class="users-icon">👥</span>
+                    <span>Manage Access</span>
+                </div>
+                <div class="modal-body">
+                    <div id="users-list" class="users-list">
+                        <!-- Users will be loaded here -->
+                    </div>
+                    <div class="add-user-form">
+                        <button id="add-user-button" class="sf-button">+ Add New User</button>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="access-done" class="sf-button">Done</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // Check if ethers.js is available
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                if (typeof ethers === 'undefined') {
-                    console.error("Ethers not defined. Trying to load again...");
-                    
-                    // Try to load ethers.js dynamically as a last resort
-                    var script = document.createElement('script');
-                    script.src = "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js";
-                    script.onload = function() {
-                        initApp();
-                    };
-                    document.head.appendChild(script);
-                } else {
-                    console.log("Ethers loaded successfully:", ethers.version);
-                    initApp();
-                }
-            }, 1000);
-        });
-
-        // Main application initialization
-        function initApp() {
-            // Contract address
-            const CONTRACT_ADDRESS = "0xa834416362bff38f52dA74d601BD12D3e8C336f8";
-            
-            // Contract ABI - Updated with deleteGoal function
-            const CONTRACT_ABI = [
-                "function addGoal(string calldata _text, uint256 _deadline) external",
-                "function completeGoal(uint256 _index) external",
-                "function deleteGoal(uint256 _index) external",
-                "function getUserGoals() external view returns (tuple(string text, uint256 deadline, bool completed, uint256 createdAt)[] memory)",
-                "function getCompletedGoalsCount() external view returns (uint256)",
-                "event GoalCreated(address indexed user, string text, uint256 deadline)",
-                "event GoalCompleted(address indexed user, uint256 goalIndex)",
-                "event GoalDeleted(address indexed user, uint256 goalIndex)"
-            ];
-            
-            let provider, signer, contract;
-            let userAccount = "";
-            let isConnected = false;
-            let goalToDelete = -1;
-            
-            // DOM elements
-            const connectBtn = document.getElementById('connect-wallet');
-            const walletAddress = document.getElementById('wallet-address');
-            const appSection = document.getElementById('app');
-            const goalText = document.getElementById('goal-text');
-            const deadline = document.getElementById('deadline');
-            const addGoalBtn = document.getElementById('add-goal');
-            const goalsList = document.getElementById('goals-list');
-            const metamaskStatus = document.getElementById('metamask-status');
-            const deleteModal = document.getElementById('delete-modal');
-            const modalCancel = document.getElementById('modal-cancel');
-            const modalConfirm = document.getElementById('modal-confirm');
-            
-            // Constants - Important: Fixed Chain ID for Somnia
-            const SOMNIA_CHAIN_ID = 50312;
-            const SOMNIA_CHAIN_ID_HEX = '0xC468'; // Hex of 50312
-            
-            // Try to reconnect previous session
-            checkPreviousSession();
-            
-            // Check for a previous session
-            async function checkPreviousSession() {
-                if (typeof window.ethereum !== 'undefined') {
-                    try {
-                        // Check if we're already connected (metamask stores connections)
-                        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                        if (accounts && accounts.length > 0) {
-                            // If there are connected accounts, reconnect automatically
-                            connectWallet(true);
-                        }
-                    } catch (error) {
-                        console.error("Error checking previous session:", error);
-                    }
-                }
-            }
-            
-            // Set up event listeners
-            connectBtn.addEventListener('click', function() {
-                if (isConnected) {
-                    disconnectWallet();
-                } else {
-                    connectWallet(false);
-                }
-            });
-            
-            addGoalBtn.addEventListener('click', createGoal);
-            
-            // Modal event listeners
-            modalCancel.addEventListener('click', hideDeleteModal);
-            modalConfirm.addEventListener('click', confirmDeleteGoal);
-            
-            // Connect wallet function
-            async function connectWallet(isAutoConnect = false) {
-                try {
-                    // Check if MetaMask is installed
-                    if (typeof window.ethereum === 'undefined') {
-                        alert("MetaMask not detected. Please install MetaMask from metamask.io");
-                        return;
-                    }
-                    
-                    // Request accounts or use existing ones
-                    const accounts = isAutoConnect 
-                        ? await window.ethereum.request({ method: 'eth_accounts' })
-                        : await window.ethereum.request({ method: 'eth_requestAccounts' });
-                        
-                    if (!accounts || accounts.length === 0) {
-                        return;
-                    }
-                    
-                    userAccount = accounts[0];
-                    
-                    // Set up ethers
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
-                    signer = provider.getSigner();
-                    
-                    // Check current network
-                    const network = await provider.getNetwork();
-                    console.log("Current network:", network.name, "Chain ID:", network.chainId);
-                    
-                    if (network.chainId !== SOMNIA_CHAIN_ID) {
-                        // Try to switch to Somnia network with explicit Chain ID
-                        try {
-                            await window.ethereum.request({
-                                method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: SOMNIA_CHAIN_ID_HEX }],
-                            });
-                            // Reconnect after network change
-                            setTimeout(() => connectWallet(true), 1500);
-                            return;
-                        } catch (switchError) {
-                            console.error("Error switching network:", switchError);
-                            // If network doesn't exist in MetaMask, try to add it with explicit Chain ID
-                            if (switchError.code === 4902) {
-                                try {
-                                    await window.ethereum.request({
-                                        method: 'wallet_addEthereumChain',
-                                        params: [{
-                                            chainId: SOMNIA_CHAIN_ID_HEX,
-                                            chainName: 'Somnia Testnet',
-                                            nativeCurrency: {
-                                                name: 'STT',
-                                                symbol: 'STT',
-                                                decimals: 18
-                                            },
-                                            rpcUrls: ['https://dream-rpc.somnia.network'],
-                                            blockExplorerUrls: ['https://shannon-explorer.somnia.network']
-                                        }]
-                                    });
-                                    setTimeout(() => connectWallet(true), 1500);
-                                    return;
-                                } catch (addError) {
-                                    alert("Could not add Somnia network. Please configure it manually in MetaMask.");
-                                    console.error("Error adding network:", addError);
-                                    return;
-                                }
-                            } else {
-                                alert("Could not switch to Somnia network. Please change it manually.");
-                                return;
-                            }
-                        }
-                    }
-                    
-                    // Create contract instance
-                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-                    
-                    // Update UI
-                    isConnected = true;
-                    connectBtn.textContent = 'Disconnect';
-                    walletAddress.textContent = `${userAccount.substring(0, 6)}...${userAccount.substring(38)}`;
-                    walletAddress.style.display = 'block';
-                    appSection.style.display = 'block';
-                    appSection.className = 'fade-in';
-                    
-                    // Load existing goals
-                    loadGoals();
-                    
-                    // Listen for account changes
-                    window.ethereum.on('accountsChanged', function (accounts) {
-                        window.location.reload();
-                    });
-                    
-                    // Listen for network changes
-                    window.ethereum.on('chainChanged', function (chainId) {
-                        window.location.reload();
-                    });
-                    
-                } catch (error) {
-                    console.error("Error connecting wallet:", error);
-                    alert(`Error connecting: ${error.message}`);
-                }
-            }
-            
-            // Disconnect wallet function
-            function disconnectWallet() {
-                isConnected = false;
-                userAccount = "";
-                connectBtn.textContent = 'Connect Wallet';
-                walletAddress.style.display = 'none';
-                appSection.style.display = 'none';
-                
-                // Note: MetaMask doesn't actually provide a way to programmatically disconnect
-                // We're just updating the UI state, but the user remains connected in MetaMask
-                // They would need to disconnect manually from MetaMask
-            }
-            
-            // Create a new goal
-            async function createGoal() {
-                try {
-                    const text = goalText.value.trim();
-                    const deadlineDate = new Date(deadline.value);
-                    
-                    if (!text) {
-                        alert("Please enter a goal");
-                        return;
-                    }
-                    
-                    if (isNaN(deadlineDate.getTime())) {
-                        alert("Please select a valid deadline");
-                        return;
-                    }
-                    
-                    // Convert date to Unix timestamp (seconds)
-                    const deadlineTimestamp = Math.floor(deadlineDate.getTime() / 1000);
-                    
-                    // Disable button while processing
-                    addGoalBtn.disabled = true;
-                    addGoalBtn.innerHTML = "<span class='loader'></span> Saving...";
-                    
-                    // Call contract
-                    const tx = await contract.addGoal(text, deadlineTimestamp);
-                    await tx.wait();
-                    
-                    // Clear fields
-                    goalText.value = "";
-                    deadline.value = "";
-                    
-                    // Reload goals
-                    loadGoals();
-                    
-                } catch (error) {
-                    console.error("Error creating goal:", error);
-                    alert(`Error: ${error.message}`);
-                } finally {
-                    addGoalBtn.disabled = false;
-                    addGoalBtn.textContent = "Save Goal";
-                }
-            }
-            
-            // Mark goal as completed
-            async function completeGoal(index) {
-                try {
-                    const completeButton = document.getElementById(`complete-button-${index}`);
-                    completeButton.innerHTML = "<span class='loader'></span> Processing...";
-                    completeButton.disabled = true;
-                    
-                    const tx = await contract.completeGoal(index);
-                    await tx.wait();
-                    
-                    loadGoals();
-                    
-                } catch (error) {
-                    console.error("Error completing goal:", error);
-                    alert(`Error: ${error.message}`);
-                    const completeButton = document.getElementById(`complete-button-${index}`);
-                    completeButton.textContent = "Mark Complete";
-                    completeButton.disabled = false;
-                }
-            }
-            
-            // Show delete modal
-            function showDeleteModal(index) {
-                goalToDelete = index;
-                deleteModal.classList.add('active');
-            }
-            
-            // Hide delete modal
-            function hideDeleteModal() {
-                deleteModal.classList.remove('active');
-                goalToDelete = -1;
-            }
-            
-            // Delete goal (after confirmation)
-                            async function confirmDeleteGoal() {
-                if (goalToDelete < 0) return;
-                
-                try {
-                    modalConfirm.innerHTML = "<span class='loader'></span> Deleting...";
-                    modalConfirm.disabled = true;
-                    
-                    const tx = await contract.deleteGoal(goalToDelete);
-                    await tx.wait();
-                    
-                    hideDeleteModal();
-                    loadGoals();
-                    
-                } catch (error) {
-                    console.error("Error deleting goal:", error);
-                    alert(`Error: ${error.message}`);
-                } finally {
-                    modalConfirm.innerHTML = "Delete Goal";
-                    modalConfirm.disabled = false;
-                }
-            }
-            
-            // Delete goal function (opens confirmation modal)
-            function deleteGoal(index) {
-                showDeleteModal(index);
-            }
-            
-            // Load goals from the contract
-            async function loadGoals() {
-                try {
-                    const goals = await contract.getUserGoals();
-                    
-                    // Clear list
-                    goalsList.innerHTML = '';
-                    
-                    if (goals.length === 0) {
-                        goalsList.innerHTML = `
-                            <div class="empty-state">
-                                <div class="empty-state-icon">📝</div>
-                                <div class="empty-state-text">No goals yet. Add your first goal above.</div>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    // Add each goal to the list
-                    goals.forEach((goal, index) => {
-                        const goalElement = document.createElement('div');
-                        
-                        const currentTimestamp = Math.floor(Date.now() / 1000);
-                        const isExpired = !goal.completed && currentTimestamp > goal.deadline;
-                        
-                        if (goal.completed) {
-                            goalElement.className = 'goal-item completed fade-in';
-                        } else if (isExpired) {
-                            goalElement.className = 'goal-item expired fade-in';
-                        } else {
-                            goalElement.className = 'goal-item pending fade-in';
-                        }
-                        
-                        let statusBadge = '';
-                        if (goal.completed) {
-                            statusBadge = '<span class="status-badge badge-completed">Completed</span>';
-                        } else if (isExpired) {
-                            statusBadge = '<span class="status-badge badge-expired">Expired</span>';
-                        } else {
-                            statusBadge = '<span class="status-badge badge-pending">In Progress</span>';
-                        }
-                        
-                        const deadlineDate = new Date(goal.deadline * 1000).toLocaleDateString();
-                        
-                        goalElement.innerHTML = `
-                            <div class="goal-title">
-                                <span>${goal.text}</span>
-                                ${statusBadge}
-                            </div>
-                            <div class="goal-deadline">Deadline: ${deadlineDate}</div>
-                            <div class="goal-actions">
-                                ${!goal.completed && !isExpired ? 
-                                    `<button id="complete-button-${index}" onclick="completeGoal(${index})" class="sf-button">Mark Complete</button>` : ''}
-                                <button id="delete-button-${index}" onclick="deleteGoal(${index})" class="sf-button sf-button-danger">Delete</button>
-                            </div>
-                        `;
-                        
-                        goalsList.appendChild(goalElement);
-                    });
-                    
-                } catch (error) {
-                    console.error("Error loading goals:", error);
-                    goalsList.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state-text">Error loading goals. Please try again.</div>
-                        </div>
-                    `;
-                }
-            }
-            
-            // Make these functions global so buttons can access them
-            window.completeGoal = completeGoal;
-            window.deleteGoal = deleteGoal;
-        }
-    </script>
+    <!-- Load JavaScript files -->
+    <script src="js/wallet.js"></script>
+    <script src="js/goals.js"></script>
+    <script src="js/sharing.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
