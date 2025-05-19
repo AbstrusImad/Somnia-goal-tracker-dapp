@@ -108,7 +108,7 @@
         <h1>Mi Registro de Objetivos</h1>
         
         <div class="network-info">
-            Esta DApp funciona en la red <strong>Holesky testnet</strong>. 
+            Esta DApp funciona en la red <strong>Somnia testnet</strong>. 
             <br>Asegúrate de que MetaMask esté configurado para esta red.
         </div>
         
@@ -122,8 +122,8 @@
             <p>Para usar esta DApp:</p>
             <ol>
                 <li>Instala <a href="https://metamask.io/download/" target="_blank">MetaMask</a> si aún no lo tienes</li>
-                <li>Configura la red Holesky en MetaMask (ID de cadena: 17000)</li>
-                <li>Consigue ETH de prueba en <a href="https://holesky-faucet.pk910.de/" target="_blank">Holesky Faucet</a></li>
+                <li>Configura la red Somnia en MetaMask (ID de cadena: 17000)</li>
+                <li>Consigue ETH de prueba en <a href="https://testnet.somnia.network/" target="_blank">Somnia Faucet</a></li>
             </ol>
         </div>
         
@@ -198,7 +198,7 @@
             const metamaskStatus = document.getElementById('metamask-status');
             
             // Constantes
-            const HOLESKY_CHAIN_ID = 50312;
+            const Somnia_CHAIN_ID = 50312;
             
             // Verificar si MetaMask está disponible
             function checkMetaMaskAvailability() {
@@ -245,30 +245,30 @@
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     signer = provider.getSigner();
                     
-                    // Verificar que estemos en Holesky
+                    // Verificar que estemos en Somnia
                     const network = await provider.getNetwork();
                     console.log("Red actual:", network.name, "Chain ID:", network.chainId);
                     
-                    if (network.chainId !== HOLESKY_CHAIN_ID) {
-                        metamaskStatus.textContent = `Red incorrecta: ${network.name} (ID: ${network.chainId}). Por favor, cambia a Holesky (ID: ${HOLESKY_CHAIN_ID})`;
+                    if (network.chainId !== Somnia_CHAIN_ID) {
+                        metamaskStatus.textContent = `Red incorrecta: ${network.name} (ID: ${network.chainId}). Por favor, cambia a Somnia (ID: ${Somnia_CHAIN_ID})`;
                         
-                        // Intentar cambiar automáticamente a Holesky
+                        // Intentar cambiar automáticamente a Somnia
                         try {
                             await window.ethereum.request({
                                 method: 'wallet_switchEthereumChain',
                                 params: [{ chainId: '0x4268' }], // 0x4268 es el hex de 17000
                             });
-                            metamaskStatus.textContent = "Cambiando a red Holesky...";
+                            metamaskStatus.textContent = "Cambiando a red Somnia...";
                             setTimeout(connectWallet, 1500); // Intentar conectar de nuevo después del cambio
                         } catch (switchError) {
-                            // Si el usuario no tiene Holesky configurada, intentamos agregarla
+                            // Si el usuario no tiene Somnia configurada, intentamos agregarla
                             if (switchError.code === 4902) {
                                 try {
                                     await window.ethereum.request({
                                         method: 'wallet_addEthereumChain',
                                         params: [{
                                             chainId: '0x4268',
-                                            chainName: 'Holesky Test Network',
+                                            chainName: 'Somnia Test Network',
                                             nativeCurrency: {
                                                 name: 'ETH',
                                                 symbol: 'ETH',
@@ -278,14 +278,14 @@
                                             blockExplorerUrls: ['https://shannon-explorer.somnia.network']
                                         }]
                                     });
-                                    metamaskStatus.textContent = "Red Holesky añadida. Intentando conectar...";
+                                    metamaskStatus.textContent = "Red Somnia añadida. Intentando conectar...";
                                     setTimeout(connectWallet, 1500);
                                 } catch (addError) {
-                                    metamaskStatus.textContent = "No se pudo añadir la red Holesky. Por favor, configúrala manualmente en MetaMask.";
+                                    metamaskStatus.textContent = "No se pudo añadir la red Somnia. Por favor, configúrala manualmente en MetaMask.";
                                     console.error("Error al añadir red:", addError);
                                 }
                             } else {
-                                metamaskStatus.textContent = "No se pudo cambiar a la red Holesky. Por favor, cámbiala manualmente en MetaMask.";
+                                metamaskStatus.textContent = "No se pudo cambiar a la red Somnia. Por favor, cámbiala manualmente en MetaMask.";
                                 console.error("Error al cambiar red:", switchError);
                             }
                         }
@@ -300,7 +300,7 @@
                     accountInfo.style.display = 'block';
                     accountInfo.innerHTML = `Conectado: ${userAccount.substring(0, 6)}...${userAccount.substring(38)}`;
                     appSection.style.display = 'block';
-                    metamaskStatus.textContent = "✅ Conectado a la red Holesky correctamente.";
+                    metamaskStatus.textContent = "✅ Conectado a la red Somnia correctamente.";
                     metamaskStatus.style.color = "#4CAF50";
                     
                     // Cargar objetivos existentes
