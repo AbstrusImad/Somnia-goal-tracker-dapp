@@ -79,15 +79,51 @@
             background-color: #ffebee;
             color: #f44336;
         }
+        #metamask-status {
+            color: #f44336;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .network-info {
+            background-color: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .wallet-info {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Mi Registro de Objetivos</h1>
         
+        <div class="network-info">
+            Esta DApp funciona en la red <strong>Holesky testnet</strong>. 
+            <br>Asegúrate de que MetaMask esté configurado para esta red.
+        </div>
+        
         <div class="connection-status" id="connection-status">
+            <div id="metamask-status"></div>
             <button id="connect-wallet">Conectar Wallet</button>
             <p id="account-info" style="display: none;"></p>
+        </div>
+        
+        <div class="wallet-info">
+            <p>Para usar esta DApp:</p>
+            <ol>
+                <li>Instala <a href="https://metamask.io/download/" target="_blank">MetaMask</a> si aún no lo tienes</li>
+                <li>Configura la red Holesky en MetaMask (ID de cadena: 17000)</li>
+                <li>Consigue ETH de prueba en <a href="https://holesky-faucet.pk910.de/" target="_blank">Holesky Faucet</a></li>
+            </ol>
         </div>
         
         <div id="app" style="display: none;">
@@ -131,6 +167,33 @@
         const deadline = document.getElementById('deadline');
         const addGoalBtn = document.getElementById('add-goal');
         const goalsList = document.getElementById('goals-list');
+        const metamaskStatus = document.getElementById('metamask-status');
+        
+        // Constantes
+        const HOLESKY_CHAIN_ID = 17000;
+        
+        // Verificar si MetaMask está disponible
+        function checkMetaMaskAvailability() {
+            metamaskStatus.textContent = "Verificando disponibilidad de MetaMask...";
+            
+            // Comprobar si MetaMask está disponible
+            if (typeof window.ethereum !== 'undefined') {
+                metamaskStatus.textContent = "MetaMask detectado ✅ Puedes conectar tu wallet.";
+                metamaskStatus.style.color = "#4CAF50";
+                return true;
+            } else {
+                metamaskStatus.textContent = "MetaMask no detectado. Por favor instala MetaMask desde metamask.io y recarga la página.";
+                metamaskStatus.style.color = "#f44336";
+                connectBtn.disabled = true;
+                return false;
+            }
+        }
+        
+        // Verificar cuando el DOM está completamente cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Esperar un segundo para dar tiempo a MetaMask a inyectar window.ethereum
+            setTimeout(checkMetaMaskAvailability, 1000);
+        });
         
         // Inicializar
         connectBtn.addEventListener('click', connectWallet);
@@ -140,44 +203,100 @@
         async function connectWallet() {
             try {
                 // Verificar si MetaMask está instalado
-                if (!window.ethereum) {
-                    alert("Por favor instala MetaMask para usar esta DApp");
+                if (typeof window.ethereum === 'undefined') {
+                    metamaskStatus.textContent = "MetaMask no detectado. Por favor instala MetaMask desde metamask.io";
                     return;
                 }
+                
+                metamaskStatus.textContent = "Solicitando acceso a la wallet...";
                 
                 // Solicitar cuentas
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 userAccount = accounts[0];
                 
+                metamaskStatus.textContent = "Wallet conectada. Verificando red...";
+                
                 // Configurar ethers
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 signer = provider.getSigner();
-                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
                 
                 // Verificar que estemos en Holesky
                 const network = await provider.getNetwork();
-                if (network.chainId !== 17000) {
-                    alert("Por favor, conecta MetaMask a la red Holesky (chainId: 17000)");
+                console.log("Red actual:", network.name, "Chain ID:", network.chainId);
+                
+                if (network.chainId !== HOLESKY_CHAIN_ID) {
+                    metamaskStatus.textContent = `Red incorrecta: ${network.name} (ID: ${network.chainId}). Por favor, cambia a Holesky (ID: ${HOLESKY_CHAIN_ID})`;
+                    
+                    // Intentar cambiar automáticamente a Holesky
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x4268' }], // 0x4268 es el hex de 17000
+                        });
+                        metamaskStatus.textContent = "Cambiando a red Holesky...";
+                        setTimeout(connectWallet, 1500); // Intentar conectar de nuevo después del cambio
+                    } catch (switchError) {
+                        // Si el usuario no tiene Holesky configurada, intentamos agregarla
+                        if (switchError.code === 4902) {
+                            try {
+                                await window.ethereum.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [{
+                                        chainId: '0x4268',
+                                        chainName: 'Holesky Test Network',
+                                        nativeCurrency: {
+                                            name: 'ETH',
+                                            symbol: 'ETH',
+                                            decimals: 18
+                                        },
+                                        rpcUrls: ['https://ethereum-holesky.publicnode.com'],
+                                        blockExplorerUrls: ['https://holesky.etherscan.io']
+                                    }]
+                                });
+                                metamaskStatus.textContent = "Red Holesky añadida. Intentando conectar...";
+                                setTimeout(connectWallet, 1500);
+                            } catch (addError) {
+                                metamaskStatus.textContent = "No se pudo añadir la red Holesky. Por favor, configúrala manualmente en MetaMask.";
+                                console.error("Error al añadir red:", addError);
+                            }
+                        } else {
+                            metamaskStatus.textContent = "No se pudo cambiar a la red Holesky. Por favor, cámbiala manualmente en MetaMask.";
+                            console.error("Error al cambiar red:", switchError);
+                        }
+                    }
                     return;
                 }
+                
+                // Crear contrato
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
                 
                 // Actualizar UI
                 connectBtn.style.display = 'none';
                 accountInfo.style.display = 'block';
                 accountInfo.innerHTML = `Conectado: ${userAccount.substring(0, 6)}...${userAccount.substring(38)}`;
                 appSection.style.display = 'block';
+                metamaskStatus.textContent = "✅ Conectado a la red Holesky correctamente.";
+                metamaskStatus.style.color = "#4CAF50";
                 
                 // Cargar objetivos existentes
                 loadGoals();
                 
                 // Escuchar eventos de cambio de cuenta
                 window.ethereum.on('accountsChanged', function (accounts) {
+                    metamaskStatus.textContent = "Cuenta cambiada. Recargando...";
+                    window.location.reload();
+                });
+                
+                // Escuchar eventos de cambio de red
+                window.ethereum.on('chainChanged', function (chainId) {
+                    metamaskStatus.textContent = "Red cambiada. Recargando...";
                     window.location.reload();
                 });
                 
             } catch (error) {
                 console.error("Error al conectar wallet:", error);
-                alert("Error al conectar wallet. Por favor, intenta de nuevo.");
+                metamaskStatus.textContent = `Error: ${error.message}`;
+                metamaskStatus.style.color = "#f44336";
             }
         }
         
@@ -202,9 +321,12 @@
                 
                 // Deshabilitar botón mientras se procesa
                 addGoalBtn.disabled = true;
+                metamaskStatus.textContent = "Enviando transacción...";
                 
                 // Llamar al contrato
                 const tx = await contract.addGoal(text, deadlineTimestamp);
+                metamaskStatus.textContent = "Transacción enviada. Esperando confirmación...";
+                
                 await tx.wait();
                 
                 // Limpiar campos
@@ -214,11 +336,13 @@
                 // Recargar objetivos
                 loadGoals();
                 
-                alert("¡Objetivo registrado con éxito en la blockchain!");
+                metamaskStatus.textContent = "¡Objetivo registrado con éxito en la blockchain!";
+                metamaskStatus.style.color = "#4CAF50";
                 
             } catch (error) {
                 console.error("Error al crear objetivo:", error);
-                alert("Error al crear objetivo: " + error.message);
+                metamaskStatus.textContent = `Error: ${error.message}`;
+                metamaskStatus.style.color = "#f44336";
             } finally {
                 addGoalBtn.disabled = false;
             }
@@ -227,19 +351,30 @@
         // Marcar objetivo como completado
         async function completeGoal(index) {
             try {
+                metamaskStatus.textContent = "Enviando transacción para completar objetivo...";
+                metamaskStatus.style.color = "#ffa000";
+                
                 const tx = await contract.completeGoal(index);
+                metamaskStatus.textContent = "Transacción enviada. Esperando confirmación...";
+                
                 await tx.wait();
                 loadGoals();
-                alert("¡Objetivo marcado como completado!");
+                
+                metamaskStatus.textContent = "¡Objetivo marcado como completado exitosamente!";
+                metamaskStatus.style.color = "#4CAF50";
             } catch (error) {
                 console.error("Error al completar objetivo:", error);
-                alert("Error al completar objetivo: " + error.message);
+                metamaskStatus.textContent = `Error: ${error.message}`;
+                metamaskStatus.style.color = "#f44336";
             }
         }
         
         // Cargar objetivos desde el contrato
         async function loadGoals() {
             try {
+                metamaskStatus.textContent = "Cargando objetivos...";
+                metamaskStatus.style.color = "#ffa000";
+                
                 const goals = await contract.getUserGoals();
                 
                 // Limpiar lista
@@ -247,6 +382,8 @@
                 
                 if (goals.length === 0) {
                     goalsList.innerHTML = '<p>No tienes objetivos registrados aún.</p>';
+                    metamaskStatus.textContent = "No hay objetivos registrados.";
+                    metamaskStatus.style.color = "#4CAF50";
                     return;
                 }
                 
@@ -279,11 +416,19 @@
                     goalsList.appendChild(goalItem);
                 });
                 
+                metamaskStatus.textContent = `${goals.length} objetivo(s) cargado(s) correctamente.`;
+                metamaskStatus.style.color = "#4CAF50";
+                
             } catch (error) {
                 console.error("Error al cargar objetivos:", error);
                 goalsList.innerHTML = '<p>Error al cargar objetivos. Por favor intenta de nuevo.</p>';
+                metamaskStatus.textContent = `Error al cargar objetivos: ${error.message}`;
+                metamaskStatus.style.color = "#f44336";
             }
         }
+        
+        // Esta función global es necesaria para que el botón "Marcar como completado" funcione
+        window.completeGoal = completeGoal;
     </script>
 </body>
 </html>
