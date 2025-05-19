@@ -347,7 +347,7 @@ const SharingManager = (() => {
         }
     }
     
-    // Cargar objetivos compartidos conmigo
+    // Cargar objetivos compartidos conmigo - VERSIÓN CORREGIDA
     async function loadSharedGoals() {
         console.log("Cargando objetivos compartidos conmigo");
         try {
@@ -360,19 +360,31 @@ const SharingManager = (() => {
                 return;
             }
             
+            // Limpiar lista ANTES de empezar - ESTO ES CRUCIAL
+            sharedGoalsList.innerHTML = '';
+            
             const [owners, goalIndices] = await contract.getSharedWithMeGoals();
             console.log("Objetivos compartidos recibidos:", { owners, goalIndices });
             
-            // Array para almacenar objetivos válidos (que aún tienen acceso)
-            let validGoals = [];
+            // Usar un Map para rastrear objetivos únicos (por owner+index)
+            const uniqueGoals = new Map();
             
-            // Verificar cada objetivo compartido para confirmar acceso
+            // Primera pasada: identificar objetivos únicos y verificar acceso
             for (let i = 0; i < owners.length; i++) {
                 const owner = owners[i];
                 const index = typeof goalIndices[i].toNumber === 'function' ? 
                               goalIndices[i].toNumber() : Number(goalIndices[i]);
                 
-                console.log(`Verificando acceso a objetivo compartido ${i}: owner=${owner}, index=${index}`);
+                // Crear una clave única basada en propietario e índice
+                const uniqueKey = `${owner.toLowerCase()}-${index}`;
+                
+                // Si ya procesamos este objetivo, saltar
+                if (uniqueGoals.has(uniqueKey)) {
+                    console.log(`Objetivo duplicado ignorado: ${uniqueKey}`);
+                    continue;
+                }
+                
+                console.log(`Verificando acceso a objetivo compartido ${i}: owner=${owner}, index=${index}, key=${uniqueKey}`);
                 
                 try {
                     // Verificar si todavía tenemos acceso verificando nuestro rol
@@ -381,7 +393,8 @@ const SharingManager = (() => {
                     
                     // Si el rol es mayor que 0, aún tenemos acceso
                     if (roleValue > 0) {
-                        validGoals.push({ owner, index });
+                        // Añadir al mapa de objetivos únicos
+                        uniqueGoals.set(uniqueKey, { owner, index, roleValue });
                     } else {
                         console.log(`Acceso revocado para objetivo: owner=${owner}, index=${index}`);
                     }
@@ -391,13 +404,58 @@ const SharingManager = (() => {
                 }
             }
             
+            // Segunda pasada: verificar que los objetivos existen y no están eliminados
+            const validGoals = [];
+            
+            for (const [uniqueKey, goalData] of uniqueGoals.entries()) {
+                try {
+                    const { owner, index } = goalData;
+                    
+                    // Intentar obtener el objetivo del contrato
+                    const [goals, indices] = await contract.getUserGoals(owner);
+                    
+                    let goalFound = false;
+                    
+                    // Buscar el objetivo específico por índice
+                    for (let j = 0; j < indices.length; j++) {
+                        const goalIndex = typeof indices[j].toNumber === 'function' ? 
+                                         indices[j].toNumber() : Number(indices[j]);
+                        
+                        if (goalIndex === index) {
+                            // Verificar si el objetivo ha sido eliminado
+                            if (goals[j].deleted === true) {
+                                console.log(`Objetivo ${uniqueKey} está marcado como eliminado, ignorando`);
+                            } else {
+                                // Objetivo válido encontrado
+                                goalFound = true;
+                                validGoals.push({
+                                    owner,
+                                    index,
+                                    uniqueKey,
+                                    goal: goals[j]
+                                });
+                            }
+                            break;
+                        }
+                    }
+                    
+                    if (!goalFound) {
+                        console.log(`Objetivo con índice ${index} no encontrado para propietario ${owner}`);
+                    }
+                    
+                } catch (error) {
+                    console.error(`Error al verificar existencia del objetivo ${uniqueKey}:`, error);
+                }
+            }
+            
+            // Actualizar contador solo con objetivos válidos y existentes
+            const validGoalsCount = validGoals.length;
+            console.log(`Encontrados ${validGoalsCount} objetivos compartidos válidos, existentes y únicos`);
+            
             // Actualizar contador con el número real de objetivos con acceso
-            sharedGoalsCount.textContent = validGoals.length;
+            sharedGoalsCount.textContent = validGoalsCount;
             
-            // Limpiar lista
-            sharedGoalsList.innerHTML = '';
-            
-            if (validGoals.length === 0) {
+            if (validGoalsCount === 0) {
                 sharedGoalsList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">🔄</div>
@@ -407,44 +465,9 @@ const SharingManager = (() => {
                 return;
             }
             
-            // Procesar cada objetivo compartido válido
-            for (const { owner, index } of validGoals) {
-                console.log(`Procesando objetivo compartido: owner=${owner}, index=${index}`);
-                
-                // Obtener información detallada del objetivo
-                try {
-                    const [goals, indices] = await contract.getUserGoals(owner);
-                    
-                    // Encontrar el objetivo correcto
-                    for (let j = 0; j < indices.length; j++) {
-                        const goalIndex = typeof indices[j].toNumber === 'function' ? 
-                                         indices[j].toNumber() : Number(indices[j]);
-                        
-                        if (goalIndex === index) {
-                            console.log(`Objetivo encontrado en posición ${j}:`, goals[j]);
-                            // Renderizar el objetivo
-                            renderSharedGoalItem(goals[j], owner, index);
-                            break;
-                        }
-                    }
-                } catch (error) {
-                    console.error(`Error al cargar objetivo compartido (${owner}, ${index}):`, error);
-                    // Mostrar mensaje de error para este objetivo específico
-                    const errorElement = document.createElement('div');
-                    errorElement.className = 'goal-item error';
-                    errorElement.innerHTML = `
-                        <div class="goal-title">
-                            <span>Error al cargar objetivo</span>
-                        </div>
-                        <div class="goal-owner">
-                            <span>Compartido por: ${owner.substring(0, 6)}...${owner.substring(38)}</span>
-                        </div>
-                        <div class="goal-actions">
-                            <button onclick="SharingManager.retryLoadSharedGoal('${owner}', ${index})" class="sf-button">Reintentar</button>
-                        </div>
-                    `;
-                    sharedGoalsList.appendChild(errorElement);
-                }
+            // Renderizar los objetivos válidos
+            for (const { owner, index, uniqueKey, goal } of validGoals) {
+                renderSharedGoalItem(goal, owner, index, uniqueKey);
             }
             
         } catch (error) {
@@ -456,13 +479,33 @@ const SharingManager = (() => {
                     </div>
                 `;
             }
+            
+            // Mostrar botón para reparar si hay error
+            sharedGoalsList.innerHTML += `
+                <div class="status-message status-warning" style="margin-top: 20px;">
+                    <button onclick="SharingManager.repairSharedGoalsView()" class="sf-button">
+                        Reparar vista
+                    </button>
+                </div>
+            `;
         }
     }
     
-    // Renderizar un objetivo compartido
-    function renderSharedGoalItem(goal, owner, index) {
-        console.log(`Renderizando objetivo compartido: owner=${owner}, index=${index}`);
+    // Renderizar un objetivo compartido - VERSIÓN CORREGIDA
+    function renderSharedGoalItem(goal, owner, index, uniqueKey) {
+        console.log(`Renderizando objetivo compartido: owner=${owner}, index=${index}, key=${uniqueKey}`);
+        
+        // Crear un ID seguro para el elemento DOM (sin caracteres especiales)
+        const safeId = uniqueKey.replace(/[^a-zA-Z0-9]/g, '');
+        
+        // Verificar si ya existe un elemento con este ID
+        if (document.getElementById(`goal-item-${safeId}`)) {
+            console.log(`Objetivo ${uniqueKey} ya renderizado, ignorando`);
+            return;
+        }
+        
         const goalElement = document.createElement('div');
+        goalElement.id = `goal-item-${safeId}`;
         
         // Convertir valores a tipos primitivos si son BigNumber
         const deadline = typeof goal.deadline === 'object' && goal.deadline.toNumber ? 
@@ -497,6 +540,11 @@ const SharingManager = (() => {
             deadlineDate = "Fecha inválida";
         }
         
+        // Escapar texto para evitar problemas de HTML
+        const safeText = typeof goal.text === 'string' ? 
+                         goal.text.replace(/</g, '&lt;').replace(/>/g, '&gt;') : 
+                         'Objetivo sin texto';
+        
         // Construir elemento HTML
         goalElement.innerHTML = `
             <div class="goal-owner">
@@ -504,7 +552,7 @@ const SharingManager = (() => {
                 <span>Compartido por: ${owner.substring(0, 6)}...${owner.substring(38)}</span>
             </div>
             <div class="goal-title">
-                <span>${goal.text}</span>
+                <span>${safeText}</span>
                 ${statusBadge}
             </div>
             <div class="goal-deadline">Fecha límite: ${deadlineDate}</div>
@@ -632,8 +680,18 @@ const SharingManager = (() => {
                                  indices[j].toNumber() : Number(indices[j]);
                 
                 if (goalIndex === index) {
+                    // Verificar si el objetivo ha sido eliminado
+                    if (goals[j].deleted === true) {
+                        console.log(`Objetivo está marcado como eliminado, ignorando`);
+                        alert("Este objetivo ya no está disponible (ha sido eliminado)");
+                        return;
+                    }
+                    
+                    // Crear clave única para identificar el objetivo
+                    const uniqueKey = `${owner.toLowerCase()}-${index}`;
+                    
                     // Renderizar el objetivo
-                    renderSharedGoalItem(goals[j], owner, index);
+                    renderSharedGoalItem(goals[j], owner, index, uniqueKey);
                     
                     // Eliminar el elemento de error
                     const errorElements = Array.from(sharedGoalsList.querySelectorAll('.goal-item.error'));
@@ -644,12 +702,58 @@ const SharingManager = (() => {
                         }
                     }
                     
-                    break;
+                    return;
                 }
             }
+            
+            // Si llegamos aquí, no se encontró el objetivo
+            alert("El objetivo solicitado ya no existe");
+            
         } catch (error) {
             console.error(`Error al reintentar cargar objetivo compartido:`, error);
             alert(`Error: ${error.message}`);
+        }
+    }
+    
+    // Función para reparar la vista de objetivos compartidos
+    async function repairSharedGoalsView() {
+        console.log("Reparando vista de objetivos compartidos...");
+        
+        // Mostrar un mensaje de carga
+        if (sharedGoalsList) {
+            sharedGoalsList.innerHTML = `
+                <div class="status-message status-info">
+                    <span class="loader"></span> Reparando datos de objetivos compartidos...
+                </div>
+            `;
+        }
+        
+        try {
+            // Limpiar el estado en la interfaz
+            if (sharedGoalsCount) {
+                sharedGoalsCount.textContent = "...";
+            }
+            
+            // Forzar actualización de datos compartidos
+            await loadSharedGoals();
+            
+            // Mostrar notificación de éxito
+            showNotification("Vista reparada", "La vista de objetivos compartidos ha sido reparada.", "success");
+            
+        } catch (error) {
+            console.error("Error al reparar vista:", error);
+            
+            // Mostrar mensaje de error
+            if (sharedGoalsList) {
+                sharedGoalsList.innerHTML = `
+                    <div class="status-message status-error">
+                        Error al reparar vista: ${error.message}
+                    </div>
+                `;
+            }
+            
+            // Mostrar notificación de error
+            showNotification("Error", "No se pudo reparar la vista de objetivos compartidos.", "error");
         }
     }
     
@@ -776,7 +880,8 @@ const SharingManager = (() => {
         retryLoadSharedGoal,
         refreshSharedData: function() {
             loadSharedGoals();
-        }
+        },
+        repairSharedGoalsView
     };
 })();
 
@@ -790,12 +895,6 @@ window.shareGoalDirect = function(goalIndex) {
         alert("Error: No se pudo acceder al administrador de compartición");
     }
 };
-
-// Estilos para notificaciones
-function addNotificationStyles() {
-    // Los estilos de notificaciones ya están incluidos en el CSS principal
-    console.log("Estilos de notificaciones cargados");
-}
 
 // Crear contenedor de notificaciones cuando se inicializa
 document.addEventListener('DOMContentLoaded', function() {
