@@ -195,5 +195,24 @@
     <script src="js/goals.js"></script>
     <script src="js/sharing.js"></script>
     <script src="js/app.js"></script>
+
+    <!-- Código para solucionar problemas de conexión -->
+    <script>
+        // Script de respaldo para conexión directa a MetaMask
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Verificando si el botón de conexión funciona correctamente...");
+            
+            // Comprobar si el botón principal funciona después de 3 segundos
+            setTimeout(function() {
+                const connectBtn = document.getElementById('connect-wallet');
+                
+                // Añadir un atributo onclick directamente como respaldo
+                if (connectBtn) {
+                    console.log("Añadiendo atributo onclick directo al botón como respaldo");
+                    connectBtn.setAttribute('onclick', 'connectMetaMask()');
+                }
+            }, 3000);
+        });
+    </script>
 </body>
 </html>

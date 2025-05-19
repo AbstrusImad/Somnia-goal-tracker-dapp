@@ -10,10 +10,7 @@ const WalletManager = (() => {
     let isConnected = false;
     
     // DOM elements
-    const connectBtn = document.getElementById('connect-wallet');
-    const walletAddress = document.getElementById('wallet-address');
-    const appSection = document.getElementById('app');
-    const metamaskStatus = document.getElementById('metamask-status');
+    let connectBtn, walletAddress, appSection, metamaskStatus;
     
     // Constants - Important: Fixed Chain ID for Somnia
     const SOMNIA_CHAIN_ID = 50312;
@@ -51,13 +48,45 @@ const WalletManager = (() => {
 
     // Setup event listeners
     function init() {
-        connectBtn.addEventListener('click', function() {
+        console.log("Inicializando WalletManager...");
+        
+        // Obtener referencias a los elementos DOM
+        connectBtn = document.getElementById('connect-wallet');
+        walletAddress = document.getElementById('wallet-address');
+        appSection = document.getElementById('app');
+        metamaskStatus = document.getElementById('metamask-status');
+        
+        // Verificar que los elementos existen
+        if (!connectBtn) {
+            console.error("Error: Elemento 'connect-wallet' no encontrado");
+            return;
+        }
+        
+        console.log("Elementos DOM encontrados, configurando eventos...");
+        
+        // Usar onclick directo en lugar de addEventListener
+        connectBtn.onclick = function() {
+            console.log("Botón connect wallet clickeado");
             if (isConnected) {
                 disconnectWallet();
             } else {
                 connectWallet(false);
             }
-        });
+        };
+        
+        // Mostrar estado mientras verificamos MetaMask
+        metamaskStatus.textContent = "Verificando conexión con MetaMask...";
+        metamaskStatus.style.display = "block";
+        
+        // Verificar disponibilidad de MetaMask
+        if (typeof window.ethereum === 'undefined') {
+            console.error("MetaMask no está instalado");
+            metamaskStatus.textContent = "MetaMask no está instalado. Por favor instala MetaMask desde metamask.io";
+            metamaskStatus.className = "status-message status-error";
+            return;
+        }
+        
+        metamaskStatus.style.display = "none";
         
         // Try to reconnect previous session
         checkPreviousSession();
@@ -65,10 +94,12 @@ const WalletManager = (() => {
         // Setup network change listeners
         if (window.ethereum) {
             window.ethereum.on('accountsChanged', function (accounts) {
+                console.log("Cuentas de MetaMask cambiaron:", accounts);
                 window.location.reload();
             });
             
             window.ethereum.on('chainChanged', function (chainId) {
+                console.log("Cadena de MetaMask cambió:", chainId);
                 window.location.reload();
             });
         }
@@ -76,12 +107,17 @@ const WalletManager = (() => {
     
     // Check for a previous session
     async function checkPreviousSession() {
+        console.log("Verificando sesión previa...");
         if (typeof window.ethereum !== 'undefined') {
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                console.log("Cuentas actuales:", accounts);
                 if (accounts && accounts.length > 0) {
                     // If there are connected accounts, reconnect automatically
+                    console.log("Sesión existente encontrada, reconectando...");
                     connectWallet(true);
+                } else {
+                    console.log("No hay sesión previa");
                 }
             } catch (error) {
                 console.error("Error checking previous session:", error);
@@ -91,46 +127,66 @@ const WalletManager = (() => {
     
     // Connect wallet function
     async function connectWallet(isAutoConnect = false) {
+        console.log("Conectando wallet...", isAutoConnect ? "(reconexión automática)" : "(conexión manual)");
         try {
             // Check if MetaMask is installed
             if (typeof window.ethereum === 'undefined') {
-                alert("MetaMask not detected. Please install MetaMask from metamask.io");
+                const errorMsg = "MetaMask no detectado. Por favor instala MetaMask desde metamask.io";
+                console.error(errorMsg);
+                alert(errorMsg);
                 return;
             }
             
+            console.log("Solicitando cuentas a MetaMask...");
+            
             // Request accounts or use existing ones
-            const accounts = isAutoConnect 
-                ? await window.ethereum.request({ method: 'eth_accounts' })
-                : await window.ethereum.request({ method: 'eth_requestAccounts' });
-                
+            let accounts;
+            try {
+                accounts = isAutoConnect 
+                    ? await window.ethereum.request({ method: 'eth_accounts' })
+                    : await window.ethereum.request({ method: 'eth_requestAccounts' });
+                console.log("Cuentas obtenidas:", accounts);
+            } catch (err) {
+                console.error("Error al solicitar cuentas:", err);
+                alert(`Error al solicitar acceso a MetaMask: ${err.message}`);
+                return;
+            }
+            
             if (!accounts || accounts.length === 0) {
+                console.log("No se seleccionaron cuentas");
                 return;
             }
             
             userAccount = accounts[0];
+            console.log("Cuenta seleccionada:", userAccount);
             
             // Set up ethers
+            console.log("Configurando proveedor y firmante...");
             provider = new ethers.providers.Web3Provider(window.ethereum);
             signer = provider.getSigner();
             
             // Check current network
+            console.log("Verificando red actual...");
             const network = await provider.getNetwork();
-            console.log("Current network:", network.name, "Chain ID:", network.chainId);
+            console.log("Red actual:", network.name, "Chain ID:", network.chainId);
             
             if (network.chainId !== SOMNIA_CHAIN_ID) {
+                console.log("Red incorrecta, intentando cambiar a Somnia...");
                 // Try to switch to Somnia network
                 try {
                     await window.ethereum.request({
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId: SOMNIA_CHAIN_ID_HEX }],
                     });
+                    console.log("Solicitud de cambio de red enviada, reconectando en 1.5 segundos...");
                     // Reconnect after network change
                     setTimeout(() => connectWallet(true), 1500);
                     return;
                 } catch (switchError) {
-                    console.error("Error switching network:", switchError);
+                    console.error("Error al cambiar de red:", switchError);
                     // If network doesn't exist, try to add it
                     if (switchError.code === 4902) {
+                        console.log("Red no encontrada, intentando añadirla...");
                         try {
                             await window.ethereum.request({
                                 method: 'wallet_addEthereumChain',
@@ -146,24 +202,37 @@ const WalletManager = (() => {
                                     blockExplorerUrls: ['https://shannon-explorer.somnia.network']
                                 }]
                             });
+                            console.log("Red añadida, reconectando en 1.5 segundos...");
                             setTimeout(() => connectWallet(true), 1500);
                             return;
                         } catch (addError) {
-                            alert("Could not add Somnia network. Please configure it manually in MetaMask.");
-                            console.error("Error adding network:", addError);
+                            const errorMsg = "No se pudo añadir la red Somnia. Por favor configúrala manualmente en MetaMask.";
+                            console.error(errorMsg, addError);
+                            alert(errorMsg);
                             return;
                         }
                     } else {
-                        alert("Could not switch to Somnia network. Please change it manually.");
+                        const errorMsg = "No se pudo cambiar a la red Somnia. Por favor cámbiala manualmente.";
+                        console.error(errorMsg);
+                        alert(errorMsg);
                         return;
                     }
                 }
             }
             
             // Create contract instance
-            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            console.log("Creando instancia del contrato...");
+            try {
+                contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                console.log("Contrato instanciado correctamente");
+            } catch (contractError) {
+                console.error("Error al instanciar el contrato:", contractError);
+                alert(`Error al conectar con el contrato: ${contractError.message}`);
+                return;
+            }
             
             // Update UI
+            console.log("Actualizando interfaz...");
             isConnected = true;
             connectBtn.textContent = 'Disconnect';
             walletAddress.textContent = `${userAccount.substring(0, 6)}...${userAccount.substring(38)}`;
@@ -172,18 +241,22 @@ const WalletManager = (() => {
             appSection.className = 'fade-in';
             
             // Notify app is ready
+            console.log("Disparando evento walletConnected...");
             document.dispatchEvent(new CustomEvent('walletConnected', { 
                 detail: { userAccount, contract, provider, signer }
             }));
             
+            console.log("Wallet conectada exitosamente!");
+            
         } catch (error) {
-            console.error("Error connecting wallet:", error);
-            alert(`Error connecting: ${error.message}`);
+            console.error("Error general al conectar wallet:", error);
+            alert(`Error al conectar: ${error.message}`);
         }
     }
     
     // Disconnect wallet function
     function disconnectWallet() {
+        console.log("Desconectando wallet...");
         isConnected = false;
         userAccount = "";
         connectBtn.textContent = 'Connect Wallet';
@@ -193,6 +266,7 @@ const WalletManager = (() => {
         // Notify disconnection
         document.dispatchEvent(new CustomEvent('walletDisconnected'));
         
+        console.log("Wallet desconectada (UI)");
         // Note: MetaMask doesn't actually provide a way to programmatically disconnect
         // We're just updating the UI state, but the user remains connected in MetaMask
     }
@@ -208,5 +282,32 @@ const WalletManager = (() => {
     };
 })();
 
+// Exponer una función global para conectar wallet directamente desde HTML
+window.connectMetaMask = function() {
+    console.log("Función global connectMetaMask llamada");
+    if (typeof ethereum !== 'undefined') {
+        ethereum.request({ method: 'eth_requestAccounts' })
+        .then(accounts => {
+            console.log("Cuentas obtenidas (global):", accounts);
+            alert("Conectado a: " + accounts[0]);
+            // Recargar la página para que WalletManager reconozca la conexión
+            window.location.reload();
+        })
+        .catch(err => {
+            console.error("Error al conectar (global):", err);
+            alert("Error al conectar: " + err.message);
+        });
+    } else {
+        console.error("MetaMask no detectado (global)");
+        alert("MetaMask no está instalado. Por favor instala MetaMask desde metamask.io");
+    }
+};
+
 // Exposing to window for debugging
 window.WalletManager = WalletManager;
+
+// Inicializar automáticamente cuando el documento esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Documento cargado, inicializando WalletManager...");
+    WalletManager.init();
+});
