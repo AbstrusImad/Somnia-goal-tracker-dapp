@@ -214,5 +214,25 @@
             }, 3000);
         });
     </script>
+
+    <!-- Código para modificar el botón Save Goal en index.html -->
+    <script>
+        // Script para asegurarse de que el botón Save Goal funcione
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Configurando botón Save Goal...");
+            
+            // Obtener referencia al botón
+            const saveGoalBtn = document.getElementById('add-goal');
+            
+            if (saveGoalBtn) {
+                console.log("Botón Save Goal encontrado, añadiendo atributo onclick directo");
+                
+                // Añadir atributo onclick directo
+                saveGoalBtn.setAttribute('onclick', 'createGoalDirect()');
+            } else {
+                console.error("Botón Save Goal no encontrado");
+            }
+        });
+    </script>
 </body>
 </html>
