@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Discord Integration</title>
+</head>
+<body>
+    <h2>Vinculación con Discord</h2>
+    <button id="link-discord-button">Vincular con Discord</button>
+    <div id="link-status">Estado: No Vinculado</div>
+
+    <hr>
+
+    <h2>Enviar Fondos a Usuario de Discord</h2>
+    <div>
+        <label for="discord-user-id-input">ID de Usuario de Discord:</label>
+        <input type="text" id="discord-user-id-input" placeholder="Ingresa ID de Discord">
+        <button id="search-discord-user-button">Buscar Usuario</button>
+    </div>
+    <div id="user-search-result"></div>
+
+    <div>
+        <label for="amount-to-send-input">Monto a Enviar (ETH):</label>
+        <input type="text" id="amount-to-send-input" placeholder="0.1">
+        <button id="send-funds-button">Enviar Fondos</button>
+    </div>
+
+    <!-- Optional: Section for Discord Server Donations -->
+    <!--
+    <hr>
+    <h2>Donar a Servidor de Discord</h2>
+    <div>
+        <label for="discord-server-id-input">ID de Servidor de Discord:</label>
+        <input type="text" id="discord-server-id-input" placeholder="Ingresa ID de Servidor">
+        <button id="search-discord-server-button">Buscar Servidor</button>
+    </div>
+    <div id="server-search-result"></div>
+    <div>
+        <label for="server-amount-to-send-input">Monto a Donar (ETH):</label>
+        <input type="text" id="server-amount-to-send-input" placeholder="0.1">
+        <button id="send-server-donation-button">Donar al Servidor</button>
+    </div>
+    -->
+
+    <script src="js/discordLinker.js"></script>
+    <script src="js/payments.js"></script>
+    <!-- app.js and wallet.js would be included here as well if this were a full integration -->
+    <!-- <script src="js/wallet.js"></script> -->
+    <!-- <script src="js/app.js"></script> -->
+    <script>
+        // Simplified init for demonstration
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initDiscordLinker === 'function') {
+                initDiscordLinker();
+            }
+            if (typeof initPayments === 'function') {
+                initPayments();
+            }
+        });
+    </script>
+</body>
+</html>
